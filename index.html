@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff9f0;--surface:#fffdf9;--border:#e8ddd0;
+  --ink:#2a1a0e;--accent:#e85d26;--accent3:#52b788;
+  --fail:#cc3366;--muted:#9a8880;--warn:#f5a623;
+  --font:'Zen Maru Gothic',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
+
+#mode-select{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;gap:28px}
+.mode-title{font-size:clamp(24px,5vw,46px);font-weight:900;text-align:center;line-height:1.3}
+.mode-title span{color:var(--accent)}
+.mode-cards{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+.mode-card{width:210px;padding:26px 18px;background:var(--surface);border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.mode-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 8px 24px rgba(232,93,38,.15)}
+.mode-icon{font-size:42px}.mode-name{font-size:17px;font-weight:700}
+.mode-desc{font-size:12px;color:var(--muted);line-height:1.6}
+
+.page{display:none;flex-direction:column;min-height:100vh}
+.page.active{display:flex}
+.app-header{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--surface);border-bottom:1.5px solid var(--border);flex-shrink:0}
+.back-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:5px 11px;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:700}
+.back-btn:hover{background:var(--border)}
+.header-title{font-size:16px;font-weight:900;flex:1}
+.header-badge{background:var(--accent);color:#fff;border-radius:999px;padding:3px 11px;font-size:11px;font-weight:700}
+
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:6px 10px;background:var(--surface);border-bottom:1.5px solid var(--border);flex-shrink:0}
+.tool-btn{width:30px;height:30px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;position:relative}
+.tool-btn:hover{background:var(--bg)}
+.tool-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.tool-btn::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:50}
+.tool-btn::before{content:'';position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--ink);pointer-events:none;opacity:0;transition:opacity .15s;z-index:50}
+.tool-btn:hover::after,.tool-btn:hover::before{opacity:1}
+.sep{width:1px;height:22px;background:var(--border);margin:0 2px}
+.sg{display:flex;align-items:center;gap:4px}
+.sg label{font-size:10px;color:var(--muted)}
+input[type=range]{width:60px;accent-color:var(--accent)}
+.vo{font-size:10px;font-weight:700;min-width:28px}
+select{height:26px;font-size:11px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);font-family:var(--font);padding:0 5px;cursor:pointer}
+input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:none}
+.rainbow-btn{width:30px;height:30px;border-radius:7px;border:2px solid rgba(0,0,0,.1);cursor:pointer;background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .1s;data-tip:attr(data-tip)}
+.rainbow-btn:hover{transform:scale(1.1)}
+.rainbow-btn::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;font-weight:700;padding:5px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:50}
+.rainbow-btn:hover::after{opacity:1}
+.rainbow-dot{width:14px;height:14px;border-radius:3px;border:2px solid rgba(255,255,255,.9);background:#000;pointer-events:none;transition:background .1s}
+
+.palette-bar{display:flex;align-items:center;gap:4px;padding:5px 10px;background:var(--surface);border-bottom:1.5px solid var(--border);flex-wrap:wrap;flex-shrink:0}
+.swatch{width:22px;height:22px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:transform .1s;flex-shrink:0}
+.swatch:hover{transform:scale(1.15)}
+.swatch.active{border-color:var(--ink);transform:scale(1.15)}
+.cprev{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border);flex-shrink:0}
+
+.canvas-area{flex:1;overflow:auto;display:flex;justify-content:center;padding:10px;background:var(--bg)}
+.canvas-inner{position:relative;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.canvas-inner canvas{display:block;touch-action:none}
+
+#chain-view{padding:8px 12px;overflow-y:auto;display:flex;gap:8px;align-items:flex-start;background:var(--bg);border-bottom:1.5px solid var(--border);max-height:220px;flex-shrink:0;flex-direction:column;width:100%}
+.dual-row{display:flex;gap:0;align-items:flex-start;overflow-x:auto;width:100%;padding-bottom:4px}
+.chain-label-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;color:#fff;margin-bottom:4px;align-self:flex-start}
+.chain-label-badge.a{background:var(--accent)}
+.chain-label-badge.b{background:var(--accent2)}
+.chain-node.selectable{cursor:pointer}
+.chain-node.selectable:hover .chain-thumb{border-color:var(--warn);box-shadow:0 0 0 3px rgba(245,166,35,.3);transform:scale(1.05)}
+.chain-thumb{transition:transform .15s,border-color .15s,box-shadow .15s}
+.chain-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.chain-node{position:relative}
+.chain-thumb{width:86px;height:64px;border:2px solid var(--border);border-radius:7px;object-fit:cover;background:#fff;display:block}
+.chain-node.latest .chain-thumb{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,93,38,.2)}
+.chain-node.done .chain-thumb{border-color:var(--accent3)}
+.chain-lbl{font-size:9px;text-align:center;margin-top:3px;max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.chain-title-badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--accent3);color:#fff;font-size:8px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:86px;overflow:hidden;text-overflow:ellipsis}
+.chain-arrow{display:flex;align-items:center;padding:0 3px;color:var(--muted);font-size:16px;align-self:center;margin-bottom:16px}
+.fail-branch{margin-top:3px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.fail-thumb{width:60px;height:45px;border:2px solid var(--fail);border-radius:6px;object-fit:cover;background:#fff}
+.fail-badge{font-size:8px;color:var(--fail);font-weight:700}
+.fail-title{font-size:8px;color:var(--muted);max-width:60px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* LOCK SCREEN */
+#lock-screen{position:absolute;inset:0;background:rgba(255,249,240,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:20;padding:24px;text-align:center}
+#lock-screen.show{display:flex}
+.lock-icon{font-size:52px}
+.lock-title{font-size:20px;font-weight:900}
+.lock-sub{font-size:13px;color:var(--muted);line-height:1.8;max-width:320px}
+.lock-timer-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+.lock-timer-label{font-size:11px;color:var(--muted)}
+.lock-timer{font-size:40px;font-weight:900;color:var(--accent);font-variant-numeric:tabular-nums;letter-spacing:2px}
+.lock-timer.warn{color:var(--fail)}
+.lock-progress{width:220px;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.lock-progress-bar{height:100%;background:var(--accent);border-radius:4px;transition:width 1s linear}
+.lock-progress-bar.warn{background:var(--fail)}
+.lock-hint{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* GATE */
+#title-gate{position:absolute;inset:0;background:rgba(255,249,240,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10;padding:20px}
+#title-gate.hidden{display:none}
+#chain-select-overlay.hidden{display:none!important}
+.gate-h{font-size:17px;font-weight:900;text-align:center}
+.gate-sub{font-size:12px;color:var(--muted);text-align:center;line-height:1.7}
+.gate-must{color:var(--fail);font-weight:700}
+.gate-rules{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:11px;line-height:1.9;color:var(--ink);text-align:left;width:100%;max-width:300px}
+.gate-rules b{color:var(--accent)}
+.rule-toggle{font-size:11px;color:var(--accent2);cursor:pointer;text-decoration:underline;background:none;border:none;font-family:var(--font);padding:0}
+#gate-prev-img{width:160px;height:120px;border:2px solid var(--border);border-radius:10px;object-fit:cover;background:#eee;display:none}
+.gate-prev-label{font-size:10px;color:var(--muted)}
+#gate-input{width:100%;max-width:300px;height:46px;border:2.5px solid var(--border);border-radius:11px;padding:0 14px;font-family:var(--font);font-size:17px;font-weight:700;background:var(--bg);text-align:center;transition:border-color .15s}
+#gate-input:focus{outline:none;border-color:var(--accent)}
+#gate-input::placeholder{font-size:13px;font-weight:400;color:var(--muted)}
+#gate-error{font-size:11px;color:var(--fail);font-weight:700;min-height:16px;text-align:center}
+.gate-btn{padding:11px 32px;background:var(--accent);color:#fff;border:none;border-radius:11px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer}
+.gate-btn:hover{opacity:.85}
+
+#st-submit-bar{padding:9px 13px;background:var(--surface);border-top:1.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
+.confirmed-lbl{font-size:12px;color:var(--muted)}
+.confirmed-val{font-size:15px;font-weight:900;color:var(--accent)}
+.submit-btn{height:36px;padding:0 18px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer}
+.submit-btn:hover{opacity:.85}
+.submit-btn.sec{background:var(--surface);color:var(--ink);border:1.5px solid var(--border)}
+
+#step-bar{padding:8px 13px;background:var(--surface);border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.step{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.step.active{color:var(--accent);font-weight:700}
+.step.done{color:var(--accent3)}
+.step-num{width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.step-arrow{color:var(--muted);font-size:11px}
+
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(40px);background:var(--ink);color:#fff;padding:8px 20px;border-radius:999px;font-size:12px;font-weight:700;pointer-events:none;opacity:0;transition:all .3s;z-index:999;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* GALLERY */
+#gallery-page{background:var(--bg)}
+#gallery-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;color:var(--muted);font-size:14px}
+#gallery-empty .big{font-size:48px}
+.gallery-section{padding:14px 16px 6px;font-size:13px;font-weight:700;color:var(--muted);border-bottom:1px solid var(--border)}
+.gallery-chain{display:flex;align-items:flex-start;gap:0;padding:12px 14px;overflow-x:auto;border-bottom:1.5px solid var(--border)}
+.gallery-item{display:flex;flex-direction:column;align-items:center;flex-shrink:0;cursor:pointer}
+.gallery-item:hover .gallery-thumb{border-color:var(--accent);transform:scale(1.04)}
+.gallery-thumb{width:100px;height:75px;border:2px solid var(--border);border-radius:8px;object-fit:cover;background:#fff;transition:transform .15s,border-color .15s}
+.gallery-thumb.success{border-color:var(--accent3)}
+.gallery-thumb.latest{border-color:var(--accent)}
+.gallery-lbl{font-size:9px;color:var(--muted);margin-top:3px;max-width:100px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gallery-arrow{display:flex;align-items:center;padding:0 4px;color:var(--muted);font-size:16px;align-self:center;margin-bottom:18px}
+.gallery-fail-col{display:flex;flex-direction:column;gap:4px;align-self:flex-start;margin-top:4px}
+.gallery-fail-item{display:flex;flex-direction:column;align-items:center;cursor:pointer}
+.gallery-fail-item:hover .gallery-fail-thumb{border-color:var(--fail);opacity:.85}
+.gallery-fail-thumb{width:66px;height:50px;border:2px solid var(--fail);border-radius:6px;object-fit:cover;background:#fff;transition:opacity .15s}
+.gallery-fail-lbl{font-size:8px;color:var(--fail);font-weight:700;margin-top:2px}
+.gallery-fail-title{font-size:8px;color:var(--muted);max-width:66px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* LIGHTBOX */
+#lightbox{position:fixed;inset:0;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;flex-direction:column;gap:14px}
+#lightbox.show{display:flex}
+#lightbox-img{max-width:min(680px,90vw);max-height:65vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.lightbox-info{display:flex;flex-direction:column;align-items:center;gap:6px}
+.lightbox-title{font-size:22px;font-weight:900;color:#fff}
+.lightbox-title.hidden-title{font-size:15px;color:rgba(255,255,255,.5);font-style:italic}
+.lightbox-meta{font-size:12px;color:rgba(255,255,255,.5)}
+.lightbox-nav{display:flex;gap:12px}
+.lb-btn{height:36px;padding:0 20px;border:1.5px solid rgba(255,255,255,.3);border-radius:9px;background:rgba(255,255,255,.1);color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:background .15s}
+.lb-btn:hover{background:rgba(255,255,255,.2)}
+.lb-btn.close{background:var(--accent);border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div id="mode-select">
+  <div class="mode-title">🎨 <span>えあそび</span></div>
+  <div class="mode-cards">
+    <div class="mode-card" onclick="startFree()">
+      <div class="mode-icon">✏️</div>
+      <div class="mode-name">自由モード</div>
+      <div class="mode-desc">自由に描いてDL保存</div>
+    </div>
+    <div class="mode-card" onclick="startShiritori()">
+      <div class="mode-icon">🔗</div>
+      <div class="mode-name">しりとりモード</div>
+      <div class="mode-desc">前の絵を見てお題を考え<br>タイトルをつけて描く！<br>タイトルは次の人まで秘密</div>
+    </div>
+    <div class="mode-card" onclick="startGallery()">
+      <div class="mode-icon">🖼️</div>
+      <div class="mode-name">ギャラリー</div>
+      <div class="mode-desc">しりとりの過去の絵を<br>まとめて閲覧できるよ</div>
+    </div>
+  </div>
+</div>
+
+<!-- GALLERY PAGE -->
+<div id="gallery-page" class="page">
+  <div class="app-header">
+    <button class="back-btn" onclick="goHome()">← ホーム</button>
+    <div class="header-title">🖼️ ギャラリー</div>
+    <span class="header-badge" id="gallery-count">0枚</span>
+  </div>
+  <div id="gallery-body" style="flex:1;overflow-y:auto"></div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation()">
+  <div class="lightbox-info" onclick="event.stopPropagation()">
+    <div class="lightbox-title" id="lightbox-title"></div>
+    <div class="lightbox-meta" id="lightbox-meta"></div>
+    <div class="lightbox-nav">
+      <button class="lb-btn" onclick="lbPrev()">← 前の絵</button>
+      <button class="lb-btn" onclick="lbNext()">次の絵 →</button>
+      <button class="lb-btn close" onclick="closeLightbox()">✕ 閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div id="free-page" class="page">
+  <div class="app-header">
+    <button class="back-btn" onclick="goHome()">← ホーム</button>
+    <div class="header-title">✏️ 自由モード</div>
+    <button class="submit-btn" onclick="freeDownload()">💾 保存</button>
+  </div>
+  <div class="toolbar">
+    <button class="tool-btn active" id="free-btn-pen" data-tip="ペン" onclick="setFreeTool('pen')">✏️</button>
+    <button class="tool-btn" id="free-btn-brush" data-tip="ブラシ" onclick="setFreeTool('brush')">🖌️</button>
+    <button class="tool-btn" id="free-btn-spray" data-tip="スプレー" onclick="setFreeTool('spray')">💨</button>
+    <button class="tool-btn" id="free-btn-eraser" data-tip="消しゴム" onclick="setFreeTool('eraser')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="18" height="18"><rect x="2" y="6" width="16" height="10" rx="1.5" fill="#f0e6ff" stroke="#7a5c99" stroke-width="1.3"/><rect x="2" y="6" width="6" height="10" rx="1.5" fill="#c9a0e8" stroke="#7a5c99" stroke-width="1.3"/><line x1="8" y1="6" x2="8" y2="16" stroke="#7a5c99" stroke-width="1"/><rect x="3" y="14.5" width="14" height="2" rx="0.5" fill="#d4c4e0" opacity="0.5"/></svg></button>
+    <button class="tool-btn" id="free-btn-fill" data-tip="塗りつぶし" onclick="setFreeTool('fill')">🪣</button><button class="tool-btn" id="free-btn-line" data-tip="直線" onclick="setFreeTool('line')"><svg viewBox="0 0 20 20" width="16" height="16"><line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="tool-btn" id="free-btn-rect" data-tip="四角形" onclick="setFreeTool('rect')"><svg viewBox="0 0 20 20" width="16" height="16"><rect x="3" y="4" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+    <div class="sep"></div>
+    <div class="rainbow-btn" data-tip="色を選ぶ" onclick="document.getElementById('free-cpick').click()"><div class="rainbow-dot" id="free-dot"></div><input type="color" id="free-cpick" value="#000000" oninput="freeEng&&freeEng.setColor(this.value);document.getElementById('free-dot').style.background=this.value"></div>
+    <div class="sep"></div>
+    <div class="sg"><label>サイズ</label><input type="range" min="1" max="25" value="8" style="width:100px" oninput="freeEng&&freeEng.setSize(+this.value);document.getElementById('fsz').textContent=this.value"><span class="vo" id="fsz">8</span></div>
+    <div class="sg"><label>不透明度</label><input type="range" min="5" max="100" value="100" oninput="freeEng&&freeEng.setOpacity(+this.value/100);document.getElementById('fop').textContent=this.value+'%'"><span class="vo" id="fop">100%</span></div>
+    <div class="sep"></div>
+    <select onchange="freeEng&&freeEng.setBlend(this.value)"><option value="source-over">通常</option><option value="multiply">乗算</option><option value="screen">スクリーン</option><option value="overlay">オーバーレイ</option></select>
+    <div class="sep"></div>
+    <button class="tool-btn" data-tip="元に戻す" onclick="freeEng&&freeEng.undo()">↩️</button>
+    <button class="tool-btn" data-tip="やり直す" onclick="freeEng&&freeEng.redo()">↪️</button>
+    <button class="tool-btn" data-tip="全消去" onclick="freeEng&&freeEng.clear()">🗑️</button>
+  </div>
+  <div class="palette-bar" id="free-palette"></div>
+  <div class="canvas-area"><div class="canvas-inner" id="free-inner"></div></div>
+</div>
+
+<div id="shiritori-page" class="page">
+  <div class="app-header">
+    <button class="back-btn" onclick="goHome()">← ホーム</button>
+    <div class="header-title">🔗 しりとりモード</div>
+    <span class="header-badge" id="chain-count">チェーン 0</span>
+  </div>
+  <div id="chain-view"></div>
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative">
+    <div id="step-bar">
+      <div class="step" id="step1"><div class="step-num">1</div>前の絵を見る</div>
+      <span class="step-arrow">›</span>
+      <div class="step active" id="step2"><div class="step-num">2</div>お題を決める</div>
+      <span class="step-arrow">›</span>
+      <div class="step" id="step3"><div class="step-num">3</div>絵を描く</div>
+      <span class="step-arrow">›</span>
+      <div class="step" id="step4"><div class="step-num">4</div>投稿！</div>
+    </div>
+    <div class="toolbar">
+      <button class="tool-btn active" id="st-btn-pen" data-tip="ペン" onclick="setStTool('pen')">✏️</button>
+      <button class="tool-btn" id="st-btn-brush" data-tip="ブラシ" onclick="setStTool('brush')">🖌️</button>
+      <button class="tool-btn" id="st-btn-spray" data-tip="スプレー" onclick="setStTool('spray')">💨</button>
+      <button class="tool-btn" id="st-btn-eraser" data-tip="消しゴム" onclick="setStTool('eraser')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="18" height="18"><rect x="2" y="6" width="16" height="10" rx="1.5" fill="#f0e6ff" stroke="#7a5c99" stroke-width="1.3"/><rect x="2" y="6" width="6" height="10" rx="1.5" fill="#c9a0e8" stroke="#7a5c99" stroke-width="1.3"/><line x1="8" y1="6" x2="8" y2="16" stroke="#7a5c99" stroke-width="1"/><rect x="3" y="14.5" width="14" height="2" rx="0.5" fill="#d4c4e0" opacity="0.5"/></svg></button>
+      <button class="tool-btn" id="st-btn-fill" data-tip="塗りつぶし" onclick="setStTool('fill')">🪣</button><button class="tool-btn" id="st-btn-line" data-tip="直線" onclick="setStTool('line')"><svg viewBox="0 0 20 20" width="16" height="16"><line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="tool-btn" id="st-btn-rect" data-tip="四角形" onclick="setStTool('rect')"><svg viewBox="0 0 20 20" width="16" height="16"><rect x="3" y="4" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+      <div class="sep"></div>
+      <div class="rainbow-btn" data-tip="色を選ぶ" onclick="document.getElementById('st-cpick').click()"><div class="rainbow-dot" id="st-dot"></div><input type="color" id="st-cpick" value="#000000" oninput="stEng&&stEng.setColor(this.value);document.getElementById('st-dot').style.background=this.value"></div>
+      <div class="sep"></div>
+      <div class="sg"><label>サイズ</label><input type="range" min="1" max="25" value="8" style="width:100px" oninput="stEng&&stEng.setSize(+this.value);document.getElementById('ssz').textContent=this.value"><span class="vo" id="ssz">8</span></div>
+      <div class="sg"><label>不透明度</label><input type="range" min="5" max="100" value="100" oninput="stEng&&stEng.setOpacity(+this.value/100);document.getElementById('sop').textContent=this.value+'%'"><span class="vo" id="sop">100%</span></div>
+      <div class="sep"></div>
+      <button class="tool-btn" data-tip="元に戻す" onclick="stEng&&stEng.undo()">↩️</button>
+      <button class="tool-btn" data-tip="やり直す" onclick="stEng&&stEng.redo()">↪️</button>
+      <button class="tool-btn" data-tip="全消去" onclick="stEng&&stEng.clear()">🗑️</button>
+    </div>
+    <div class="palette-bar" id="st-palette"></div>
+    <div class="canvas-area"><div class="canvas-inner" id="st-inner"></div></div>
+    <div id="st-submit-bar">
+      <span class="confirmed-lbl">お題：</span>
+      <span class="confirmed-val" id="confirmed-title">—</span>
+      <button class="submit-btn" onclick="submitDrawing()">投稿する 🎉</button>
+      <button class="submit-btn sec" onclick="openGate()">お題を変える</button>
+    </div>
+
+
+<!-- CHAIN SELECT OVERLAY -->
+<div id="chain-select-overlay" class="hidden" style="position:absolute;inset:0;background:rgba(255,249,240,.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:15;padding:20px">
+  <div style="font-size:18px;font-weight:900;text-align:center">どちらのチェーンに続ける？</div>
+  <div style="font-size:12px;color:var(--muted)">続けたい絵をタップしてね</div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+    <div onclick="selectChain(0)" style="cursor:pointer;background:var(--surface);border:2.5px solid var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;width:150px;transition:transform .15s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform=''">
+      <div style="font-size:12px;font-weight:700;color:var(--accent)">🅰 チェーンA</div>
+      <img id="chain-select-img-a" src="" style="width:120px;height:90px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border);display:none">
+      <div id="chain-select-lbl-a" style="font-size:11px;color:var(--muted);text-align:center">まだ絵がありません</div>
+      <div id="chain-select-cnt-a" style="font-size:10px;color:var(--muted)">0枚</div>
+    </div>
+    <div onclick="selectChain(1)" style="cursor:pointer;background:var(--surface);border:2.5px solid var(--accent2);border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;width:150px;transition:transform .15s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform=''">
+      <div style="font-size:12px;font-weight:700;color:var(--accent2)">🅱 チェーンB</div>
+      <img id="chain-select-img-b" src="" style="width:120px;height:90px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border);display:none">
+      <div id="chain-select-lbl-b" style="font-size:11px;color:var(--muted);text-align:center">まだ絵がありません</div>
+      <div id="chain-select-cnt-b" style="font-size:10px;color:var(--muted)">0枚</div>
+    </div>
+  </div>
+</div>
+    <div id="title-gate">
+      <div class="gate-h" id="gate-h">前の絵を見てお題を考えよう</div>
+      <img id="gate-prev-img" src="" alt="前の絵">
+      <div class="gate-prev-label" id="gate-prev-label"></div>
+      <div class="gate-sub" id="gate-sub">ひらがなでタイトルを決めてね<br><span class="gate-must">「ん」で終わる言葉はNG</span></div>
+      <button class="rule-toggle" onclick="toggleRules()">📖 つなげ方のルールを見る</button>
+      <div class="gate-rules" id="gate-rules" style="display:none">
+        <b>しりとりのつなげ方</b><br>
+        ・前の言葉の <b>最後の文字</b> から始める<br>
+        ・<b>濁点（゛）半濁点（゜）はあってもなくてもOK</b><br>
+        　例）「ぱんだ」→「だ」でも「た」でも始められる<br>
+        ・<b>「しゃ・ちゅ・きょ」などで終わる場合は2通りOK</b><br>
+        　例）「でんしゃ」→「<b>しゃ</b>」でも「<b>や</b>」でも始められる<br>
+        　例）「おちゃ」→「<b>ちゃ</b>」でも「<b>や</b>」でも始められる<br>
+        ・「<b style="color:var(--fail)">ん</b>」で終わる言葉はNG（入力できません）<br>
+        ・ひらがなのみ入力できます
+      </div>
+      <input id="gate-input" type="text" placeholder="例：ねこ、すいか…" maxlength="20"
+        oninput="clearGateError()" onkeydown="if(event.key==='Enter')confirmTitle()">
+      <div id="gate-error"></div>
+      <button class="gate-btn" onclick="confirmTitle()">このお題で描く！</button>
+    </div>
+
+    <div id="lock-screen">
+      <div class="lock-icon">🔒</div>
+      <div class="lock-title" id="lock-title">今は誰かが描いています</div>
+      <div class="lock-sub" id="lock-sub">
+        お題を決めて絵を描いている途中です。<br>
+        投稿が終わるまで少し待ってね。<br>
+        タイムアウトになると自動で解除されます。
+      </div>
+      <div class="lock-timer-wrap">
+        <div class="lock-timer-label">タイムアウトまで</div>
+        <div class="lock-timer" id="lock-timer">10:00</div>
+        <div class="lock-progress">
+          <div class="lock-progress-bar" id="lock-bar" style="width:100%"></div>
+        </div>
+        <div class="lock-hint">残り1分で赤くなります</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+
+<script>
+
+// ============================================================
+// LOCK
+// ============================================================
+const TIMEOUT_SEC=600;
+let lockState={locked:false,lockedAt:null,timerInterval:null};
+function acquireLock(){lockState.locked=true;lockState.lockedAt=Date.now();}
+function releaseLock(){lockState.locked=false;lockState.lockedAt=null;clearInterval(lockState.timerInterval);lockState.timerInterval=null;hideLockScreen();}
+function isLocked(){if(!lockState.locked)return false;if((Date.now()-lockState.lockedAt)/1000>=TIMEOUT_SEC){releaseLock();return false;}return true;}
+function remainSec(){if(!lockState.lockedAt)return 0;return Math.max(0,TIMEOUT_SEC-Math.floor((Date.now()-lockState.lockedAt)/1000));}
+function showLockScreen(){document.getElementById('lock-screen').classList.add('show');startLockTimer();}
+function hideLockScreen(){document.getElementById('lock-screen').classList.remove('show');}
+function startLockTimer(){
+  clearInterval(lockState.timerInterval);
+  lockState.timerInterval=setInterval(()=>{
+    const rem=remainSec();
+    const m=String(Math.floor(rem/60)).padStart(2,'0');
+    const s=String(rem%60).padStart(2,'0');
+    const te=document.getElementById('lock-timer');
+    const be=document.getElementById('lock-bar');
+    if(!te)return;
+    te.textContent=`${m}:${s}`;
+    be.style.width=(rem/TIMEOUT_SEC*100)+'%';
+    te.classList.toggle('warn',rem<=60);
+    be.classList.toggle('warn',rem<=60);
+    if(rem<=0){releaseLock();showToast('タイムアウト！次の人どうぞ');openChainSelect();}
+  },1000);
+}
+
+// ============================================================
+// SHIRITORI RULES
+// ============================================================
+const DAKU={'が':'か','ぎ':'き','ぐ':'く','げ':'け','ご':'こ','ざ':'さ','じ':'し','ず':'す','ぜ':'せ','ぞ':'そ','だ':'た','ぢ':'ち','づ':'つ','で':'て','ど':'と','ば':'は','び':'ひ','ぶ':'ふ','べ':'へ','ぼ':'ほ','ぱ':'は','ぴ':'ひ','ぷ':'ふ','ぺ':'へ','ぽ':'ほ'};
+const SMALL={'ぁ':'あ','ぃ':'い','ぅ':'う','ぇ':'え','ぉ':'お','っ':'つ','ゃ':'や','ゅ':'ゆ','ょ':'よ','ゎ':'わ'};
+function normChar(c){return SMALL[c]||c;}
+function baseChar(c){const n=normChar(c);return DAKU[n]||n;}
+function checkShiritori(prev,next){
+  if(!prev||!next)return false;
+  const last=prev[prev.length-1];
+  const first=next[0];
+  const fcBase=baseChar(normChar(first));
+  if(SMALL[last]){
+    // 末尾が小さい文字：大文字化したもの or 前の文字（拗音セット）どちらでも可
+    const normLast=normChar(last);
+    const prevChar=prev.length>=2?prev[prev.length-2]:'';
+    return baseChar(normLast)===fcBase||(!!prevChar&&baseChar(prevChar)===fcBase);
+  }
+  return baseChar(last)===fcBase;
+}
+function isHiragana(s){return s.length>0&&/^[ぁ-ん]+$/.test(s);}
+
+// ============================================================
+// PALETTE
+// ============================================================
+const PALETTE=['#000000','#ffffff','#808080','#c0c0c0','#e83333','#ff8800','#ffdd00','#22aa44','#2266ff','#8833cc','#ff66aa','#00bbcc','#663300','#005522','#002288','#ffaaaa'];
+function buildPalette(barId,onPick){
+  const bar=document.getElementById(barId);bar.innerHTML='';
+  const prev=document.createElement('div');prev.className='cprev';prev.style.background='#000';bar.appendChild(prev);
+  const cp=document.createElement('input');cp.type='color';cp.value='#000000';
+  cp.style.cssText='position:absolute;width:0;height:0;opacity:0;pointer-events:none';
+  const rainbowWrap=document.createElement('div');
+  rainbowWrap.className='rainbow-btn';rainbowWrap.style.cssText='width:24px;height:24px';
+  const rainbowDot=document.createElement('div');rainbowDot.className='rainbow-dot';rainbowDot.style.cssText='width:12px;height:12px';
+  rainbowWrap.appendChild(cp);rainbowWrap.appendChild(rainbowDot);
+  rainbowWrap.onclick=()=>cp.click();
+  cp.oninput=e=>{onPick(e.target.value);prev.style.background=e.target.value;bar.querySelectorAll('.swatch').forEach(s=>s.classList.remove('active'));rainbowDot.style.background=e.target.value;};
+  bar.appendChild(prev);bar.appendChild(rainbowWrap);
+  const sep=document.createElement('div');sep.style.cssText='width:1px;height:20px;background:var(--border);margin:0 3px';bar.appendChild(sep);
+  PALETTE.forEach((c,i)=>{
+    const sw=document.createElement('div');sw.className='swatch'+(i===0?' active':'');
+    sw.style.background=c;if(c==='#ffffff')sw.style.outline='1.5px solid #ccc';
+    sw.onclick=()=>{bar.querySelectorAll('.swatch').forEach(x=>x.classList.remove('active'));sw.classList.add('active');onPick(c);prev.style.background=c;cp.value=c;};
+    bar.appendChild(sw);
+  });
+}
+
+// ============================================================
+// CANVAS ENGINE
+// ============================================================
+function makeEngine(wrapperId,W,H){
+  const wrap=document.getElementById(wrapperId);wrap.innerHTML='';wrap.style.position='relative';
+  const bg=document.createElement('canvas');bg.width=W;bg.height=H;
+  bg.getContext('2d').fillStyle='#fff';bg.getContext('2d').fillRect(0,0,W,H);wrap.appendChild(bg);
+  const lc=document.createElement('canvas');lc.width=W;lc.height=H;lc.style.cssText='position:absolute;top:0;left:0';wrap.appendChild(lc);
+  const ctx=lc.getContext('2d');
+  const pv=document.createElement('canvas');pv.width=W;pv.height=H;pv.style.cssText='position:absolute;top:0;left:0;pointer-events:none';wrap.appendChild(pv);
+  const pvCtx=pv.getContext('2d');
+  const ov=document.createElement('canvas');ov.width=W;ov.height=H;ov.style.cssText='position:absolute;top:0;left:0;cursor:crosshair;touch-action:none';wrap.appendChild(ov);
+  let tool='pen',color='#000',size=8,opacity=1,blend='source-over',drawing=false,startX=0,startY=0;
+  let hist=[],hIdx=-1;
+  function pos(e){const r=ov.getBoundingClientRect(),sx=W/r.width,sy=H/r.height;if(e.touches)return{x:(e.touches[0].clientX-r.left)*sx,y:(e.touches[0].clientY-r.top)*sy};return{x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy};}
+  function prep(){ctx.globalCompositeOperation=tool==='eraser'?'destination-out':blend;ctx.globalAlpha=tool==='brush'?opacity*0.3:opacity;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=tool==='brush'?size*2:size;ctx.lineCap='round';ctx.lineJoin='round';}
+  function spray(x,y){ctx.globalCompositeOperation=blend;ctx.globalAlpha=opacity*0.05;const r=size*2;for(let i=0;i<20;i++){const a=Math.random()*Math.PI*2,d=Math.random()*r;ctx.fillStyle=color;ctx.fillRect(x+Math.cos(a)*d,y+Math.sin(a)*d,2,2);}}
+  function fill(sx2,sy2){const id=ctx.getImageData(0,0,W,H),d=id.data;const i0=(Math.floor(sy2)*W+Math.floor(sx2))*4;const tr=d[i0],tg=d[i0+1],tb=d[i0+2],ta=d[i0+3];const cr=parseInt(color.slice(1,3),16),cg=parseInt(color.slice(3,5),16),cb=parseInt(color.slice(5,7),16);if(tr===cr&&tg===cg&&tb===cb&&ta===255)return;const stack=[[Math.floor(sx2),Math.floor(sy2)]],vis=new Uint8Array(W*H);while(stack.length){const[x,y]=stack.pop();if(x<0||x>=W||y<0||y>=H)continue;const i=(y*W+x)*4;if(vis[y*W+x])continue;if(Math.abs(d[i]-tr)>30||Math.abs(d[i+1]-tg)>30||Math.abs(d[i+2]-tb)>30||Math.abs(d[i+3]-ta)>30)continue;vis[y*W+x]=1;d[i]=cr;d[i+1]=cg;d[i+2]=cb;d[i+3]=Math.round(opacity*255);stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);}ctx.putImageData(id,0,0);saveH();}
+  function drawPreview(ex,ey){pvCtx.clearRect(0,0,W,H);pvCtx.globalAlpha=opacity;pvCtx.strokeStyle=color;pvCtx.lineWidth=size;pvCtx.lineCap='round';pvCtx.lineJoin='round';if(tool==='line'){pvCtx.beginPath();pvCtx.moveTo(startX,startY);pvCtx.lineTo(ex,ey);pvCtx.stroke();}else if(tool==='rect'){pvCtx.beginPath();pvCtx.rect(startX,startY,ex-startX,ey-startY);pvCtx.stroke();}}
+  function commitShape(ex,ey){ctx.globalCompositeOperation=blend;ctx.globalAlpha=opacity;ctx.strokeStyle=color;ctx.lineWidth=size;ctx.lineCap='round';ctx.lineJoin='round';if(tool==='line'){ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(ex,ey);ctx.stroke();}else if(tool==='rect'){ctx.beginPath();ctx.rect(startX,startY,ex-startX,ey-startY);ctx.stroke();}pvCtx.clearRect(0,0,W,H);}
+  function saveH(){hist=hist.slice(0,hIdx+1);const t=document.createElement('canvas');t.width=W;t.height=H;t.getContext('2d').drawImage(lc,0,0);hist.push(t.toDataURL());if(hist.length>30)hist.shift();hIdx=hist.length-1;}
+  function restore(data){const img=new Image();img.src=data;img.onload=()=>{ctx.clearRect(0,0,W,H);ctx.drawImage(img,0,0);};}
+  ov.addEventListener('pointerdown',e=>{drawing=true;const p=pos(e);if(tool==='fill'){fill(p.x,p.y);return;}if(tool==='line'||tool==='rect'){startX=p.x;startY=p.y;ov.setPointerCapture(e.pointerId);return;}prep();ctx.beginPath();ctx.moveTo(p.x,p.y);if(tool==='spray')spray(p.x,p.y);ov.setPointerCapture(e.pointerId);});
+  ov.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);if(tool==='line'||tool==='rect'){drawPreview(p.x,p.y);return;}if(tool==='spray')spray(p.x,p.y);else{ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);}});
+  ov.addEventListener('pointerup',e=>{if(!drawing)return;const p=pos(e);if(tool==='line'||tool==='rect')commitShape(p.x,p.y);drawing=false;saveH();});
+  ov.addEventListener('pointerleave',()=>{if(drawing&&tool!=='line'&&tool!=='rect'){drawing=false;saveH();}});
+  saveH();
+  return{
+    setTool(t){tool=t},setColor(c){color=c},setSize(s){size=s},setOpacity(o){opacity=o},setBlend(b){blend=b},
+    undo(){if(hIdx>0){hIdx--;restore(hist[hIdx]);}},redo(){if(hIdx<hist.length-1){hIdx++;restore(hist[hIdx]);}},
+    clear(){ctx.clearRect(0,0,W,H);saveH();},
+    isEmpty(){const d=ctx.getImageData(0,0,W,H).data;for(let i=3;i<d.length;i+=4)if(d[i]>0)return false;return true;},
+    getDataURL(){const o=document.createElement('canvas');o.width=W;o.height=H;const oc=o.getContext('2d');oc.fillStyle='#fff';oc.fillRect(0,0,W,H);oc.drawImage(lc,0,0);return o.toDataURL();}
+  };
+}
+
+// ============================================================
+// FREE MODE
+// ============================================================
+let freeEng=null;
+function startFree(){
+  document.getElementById('mode-select').style.display='none';
+  document.getElementById('free-page').classList.add('active');
+  if(!freeEng){freeEng=makeEngine('free-inner',660,440);buildPalette('free-palette',c=>freeEng.setColor(c));}
+}
+function setFreeTool(t){freeEng&&freeEng.setTool(t);document.querySelectorAll('[id^="free-btn-"]').forEach(b=>b.classList.remove('active'));document.getElementById('free-btn-'+t)?.classList.add('active');}
+function getTimestamp(){const n=new Date();const pad=x=>String(x).padStart(2,'0');return n.getFullYear()+pad(n.getMonth()+1)+pad(n.getDate())+'_'+pad(n.getHours())+pad(n.getMinutes())+pad(n.getSeconds());}
+function freeDownload(){
+  if(!freeEng)return;
+  const filename='drawing_'+getTimestamp()+'.png';
+  const a=document.createElement('a');a.download=filename;a.href=freeEng.getDataURL();
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  showToast('保存しました 💾 '+filename);
+}
+
+// ============================================================
+// SHIRITORI MODE
+// ============================================================
+let stEng=null;
+let chains=[[],[]]; // chains[0]=A, chains[1]=B
+let activeChainIdx=null;
+let pendingTitle='';
+
+function startShiritori(){
+  document.getElementById('mode-select').style.display='none';
+  document.getElementById('shiritori-page').classList.add('active');
+  if(!stEng){stEng=makeEngine('st-inner',560,360);buildPalette('st-palette',c=>stEng.setColor(c));}
+  activeChainIdx=null;
+  if(isLocked()){showLockScreen();}else{openChainSelect();}
+  renderChain();
+}
+function setStTool(t){stEng&&stEng.setTool(t);document.querySelectorAll('[id^="st-btn-"]').forEach(b=>b.classList.remove('active'));document.getElementById('st-btn-'+t)?.classList.add('active');}
+
+function openChainSelect(){
+  hideLockScreen();
+  document.getElementById('title-gate').classList.add('hidden');
+  // 両方空ならA直スタート
+  if(chains[0].length===0&&chains[1].length===0){selectChain(0);return;}
+  document.getElementById('chain-select-overlay').classList.remove('hidden');
+  renderChainSelectOverlay();
+}
+function selectChain(idx){
+  activeChainIdx=idx;
+  document.getElementById('chain-select-overlay').classList.add('hidden');
+  openGate();
+}
+function openGate(){
+  hideLockScreen();
+  const chain=chains[activeChainIdx]||[];
+  if(chain.length>0){
+    const prev=chain[chain.length-1];
+    if(!prev.revealed&&prev.fails&&prev.fails.length>=3){openHintModal();return;}
+  }
+  document.getElementById('title-gate').classList.remove('hidden');
+  document.getElementById('gate-input').value='';
+  document.getElementById('gate-error').textContent='';
+  const prevImg=document.getElementById('gate-prev-img');
+  const label=['A','B'][activeChainIdx];
+  if(chain.length===0){
+    prevImg.style.display='none';
+    document.getElementById('gate-prev-label').textContent='';
+    document.getElementById('gate-h').textContent='チェーン'+label+'：最初の絵のお題を決めよう！';
+    document.getElementById('gate-sub').innerHTML='ひらがなで入力してください<br><span class="gate-must">「ん」で終わる言葉はNG</span>';
+  } else {
+    prevImg.src=chain[chain.length-1].dataURL;prevImg.style.display='block';
+    document.getElementById('gate-prev-label').textContent='↑ チェーン'+label+'の前の絵（タイトルは秘密）';
+    document.getElementById('gate-h').textContent='この絵を見てお題を考えよう！';
+    document.getElementById('gate-sub').innerHTML='しりとりになるようにひらがなで入力してね<br><span class="gate-must">「ん」で終わる言葉はNG</span>';
+  }
+  setStepActive(2);
+  setTimeout(()=>document.getElementById('gate-input').focus(),100);
+}
+function clearGateError(){document.getElementById('gate-error').textContent='';}
+function confirmTitle(){
+  const val=document.getElementById('gate-input').value.trim();
+  const err=document.getElementById('gate-error');
+  if(!isHiragana(val)){err.textContent='ひらがなだけで入力してね！';return;}
+  if(val.endsWith('ん')){err.textContent='「ん」で終わる言葉はNGだよ！';return;}
+  pendingTitle=val;
+  acquireLock();
+  document.getElementById('title-gate').classList.add('hidden');
+  document.getElementById('confirmed-title').textContent=val;
+  stEng&&stEng.clear();
+  setStepActive(3);
+  showToast('「'+val+'」を描こう！✏️');
+}
+function submitDrawing(){
+  if(!pendingTitle){showToast('先にお題を決めてね！');openGate();return;}
+  if(stEng.isEmpty()){showToast('絵を描いてから投稿してね！');return;}
+  const dataURL=stEng.getDataURL();
+  const chain=chains[activeChainIdx];
+  setStepActive(4);
+  if(chain.length===0){
+    chain.push({dataURL,title:pendingTitle,revealed:false,fails:[]});
+    showToast('投稿しました！🎉');
+  } else {
+    const prev=chain[chain.length-1];
+    if(checkShiritori(prev.title,pendingTitle)){
+      prev.revealed=true;
+      chain.push({dataURL,title:pendingTitle,revealed:false,fails:[]});
+      showToast('成功！🎉「'+prev.title+'」が公開されました！');
+    } else {
+      prev.fails.push({dataURL,title:pendingTitle});
+      showToast('失敗…😢「'+pendingTitle+'」はしりとりになってなかったよ（'+prev.fails.length+'回目）');
+    }
+  }
+  releaseLock();
+  pendingTitle='';
+  document.getElementById('confirmed-title').textContent='—';
+  document.getElementById('chain-count').textContent='A:'+chains[0].length+' B:'+chains[1].length;
+  renderChain();
+  setTimeout(()=>openChainSelect(),1500);
+}
+function setStepActive(n){for(let i=1;i<=4;i++){const el=document.getElementById('step'+i);if(el)el.className='step'+(i<n?' done':i===n?' active':'');}}
+
+function renderChainRow(chain,label,colorClass,el){
+  const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-direction:column;width:100%;padding-bottom:6px;border-bottom:1px solid var(--border)';
+  const badge=document.createElement('div');badge.className='chain-label-badge '+colorClass;badge.textContent='チェーン'+label;wrap.appendChild(badge);
+  const row=document.createElement('div');row.className='dual-row';
+  if(chain.length===0){const empty=document.createElement('div');empty.style.cssText='color:var(--muted);font-size:11px;padding:6px 4px';empty.textContent='まだ絵がありません';row.appendChild(empty);}
+  chain.forEach((item,i)=>{
+    if(i>0){const arr=document.createElement('div');arr.className='chain-arrow';arr.textContent='→';row.appendChild(arr);}
+    const col=document.createElement('div');col.className='chain-col';
+    const node=document.createElement('div');node.className='chain-node '+(i===chain.length-1?'latest':'done');
+    const img=document.createElement('img');img.className='chain-thumb';img.src=item.dataURL;node.appendChild(img);
+    if(item.revealed){const b=document.createElement('div');b.className='chain-title-badge';b.textContent=item.title;node.appendChild(b);}
+    const lbl=document.createElement('div');lbl.className='chain-lbl';lbl.textContent=item.revealed?'✅ '+item.title:'🙈 ???';node.appendChild(lbl);
+    col.appendChild(node);
+    if(item.fails&&item.fails.length>0){item.fails.forEach(f=>{const fb=document.createElement('div');fb.className='fail-branch';const fi=document.createElement('img');fi.className='fail-thumb';fi.src=f.dataURL;fb.appendChild(fi);const b2=document.createElement('div');b2.className='fail-badge';b2.textContent='❌ 失敗';fb.appendChild(b2);const t2=document.createElement('div');t2.className='fail-title';t2.textContent=f.title;fb.appendChild(t2);col.appendChild(fb);});}
+    row.appendChild(col);
+  });
+  wrap.appendChild(row);el.appendChild(wrap);
+}
+function renderChain(){
+  const el=document.getElementById('chain-view');el.innerHTML='';
+  renderChainRow(chains[0],'A','a',el);
+  renderChainRow(chains[1],'B','b',el);
+}
+function renderChainSelectOverlay(){
+  [0,1].forEach(idx=>{
+    const id=['a','b'][idx];
+    const chain=chains[idx];
+    const imgEl=document.getElementById('chain-select-img-'+id);
+    const lblEl=document.getElementById('chain-select-lbl-'+id);
+    const cntEl=document.getElementById('chain-select-cnt-'+id);
+    if(chain.length===0){imgEl.style.display='none';lblEl.textContent='まだ絵がありません';cntEl.textContent='0枚';}
+    else{const last=chain[chain.length-1];imgEl.src=last.dataURL;imgEl.style.display='block';lblEl.textContent=last.revealed?'最新: '+last.title:'最新: 🙈 ???';cntEl.textContent=chain.length+'枚';}
+  });
+}
+
+function goHome(){document.getElementById('mode-select').style.display='flex';document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));}
+
+// ============================================================
+// HINT MODAL
+// ============================================================
+function openHintModal(){
+  document.getElementById('hint-reveal-area').style.display='none';
+  document.getElementById('hint-title-text').textContent='';
+  document.getElementById('hint-modal').style.display='flex';
+}
+function closeHintModal(){
+  document.getElementById('hint-modal').style.display='none';
+  openChainSelect();
+}
+function revealHint(){
+  const chain=chains[activeChainIdx]||[];
+  if(chain.length===0)return;
+  const prev=chain[chain.length-1];
+  document.getElementById('hint-title-text').textContent=prev.title;
+  document.getElementById('hint-reveal-area').style.display='block';
+  prev.revealed=true;
+  renderChain();
+}
+
+// ============================================================
+// GALLERY
+// ============================================================
+let galleryItems=[],lbIndex=0;
+function startGallery(){
+  document.getElementById('mode-select').style.display='none';
+  document.getElementById('gallery-page').classList.add('active');
+  renderGallery();
+}
+function renderGallery(){
+  const body=document.getElementById('gallery-body');body.innerHTML='';galleryItems=[];
+  const total=chains[0].length+chains[1].length;
+  if(total===0){body.innerHTML='<div id="gallery-empty"><div class="big">🎨</div><div>まだ絵がありません</div><div style="font-size:12px;color:var(--muted)">しりとりモードで絵を描いてみよう！</div></div>';document.getElementById('gallery-count').textContent='0枚';return;}
+  ['A','B'].forEach((label,ci)=>{
+    const chain=chains[ci];if(chain.length===0)return;
+    const section=document.createElement('div');section.className='gallery-section';section.textContent='チェーン'+label;body.appendChild(section);
+    const row=document.createElement('div');row.className='gallery-chain';
+    chain.forEach((item,i)=>{
+      if(i>0){const arr=document.createElement('div');arr.className='gallery-arrow';arr.textContent='→';row.appendChild(arr);}
+      const idx=galleryItems.length;
+      galleryItems.push({dataURL:item.dataURL,title:item.revealed?item.title:null,type:'main',pos:i+1,chainLabel:label});
+      const gi=document.createElement('div');gi.className='gallery-item';
+      const img=document.createElement('img');img.className='gallery-thumb '+(i===chain.length-1?'latest':'success');
+      img.src=item.dataURL;img.onclick=()=>openLightbox(idx);gi.appendChild(img);
+      const lbl=document.createElement('div');lbl.className='gallery-lbl';lbl.textContent=item.revealed?'✅ '+item.title:'🙈 ???';gi.appendChild(lbl);
+      const col=document.createElement('div');col.style.cssText='display:flex;flex-direction:column;align-items:center';col.appendChild(gi);
+      if(item.fails&&item.fails.length>0){
+        const fc=document.createElement('div');fc.className='gallery-fail-col';
+        item.fails.forEach(f=>{
+          const fidx=galleryItems.length;galleryItems.push({dataURL:f.dataURL,title:f.title,type:'fail',pos:i+1,chainLabel:label});
+          const fi=document.createElement('div');fi.className='gallery-fail-item';
+          const fimg=document.createElement('img');fimg.className='gallery-fail-thumb';fimg.src=f.dataURL;fimg.onclick=()=>openLightbox(fidx);fi.appendChild(fimg);
+          const fb=document.createElement('div');fb.className='gallery-fail-lbl';fb.textContent='❌ 失敗';fi.appendChild(fb);
+          const ft=document.createElement('div');ft.className='gallery-fail-title';ft.textContent=f.title;fi.appendChild(ft);fc.appendChild(fi);
+        });col.appendChild(fc);
+      }
+      row.appendChild(col);
+    });body.appendChild(row);
+  });
+  const tot=galleryItems.length,main=galleryItems.filter(g=>g.type==='main').length;
+  document.getElementById('gallery-count').textContent='全'+tot+'枚（成功'+main+'・失敗'+(tot-main)+'）';
+}
+function openLightbox(idx){lbIndex=idx;updateLightbox();document.getElementById('lightbox').classList.add('show');}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('show');}
+function lbPrev(){lbIndex=Math.max(0,lbIndex-1);updateLightbox();}
+function lbNext(){lbIndex=Math.min(galleryItems.length-1,lbIndex+1);updateLightbox();}
+function updateLightbox(){
+  const item=galleryItems[lbIndex];if(!item)return;
+  document.getElementById('lightbox-img').src=item.dataURL;
+  const te=document.getElementById('lightbox-title');
+  if(item.title){te.textContent=item.title;te.className='lightbox-title';}else{te.textContent='タイトルはまだ秘密 🙈';te.className='lightbox-title hidden-title';}
+  document.getElementById('lightbox-meta').textContent=(lbIndex+1)+' / '+galleryItems.length+'　'+(item.type==='fail'?'❌ 失敗作':'✅ チェーン'+item.chainLabel+' No.'+item.pos);
+}
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('lightbox').classList.contains('show'))return;
+  if(e.key==='ArrowLeft')lbPrev();
+  else if(e.key==='ArrowRight')lbNext();
+  else if(e.key==='Escape')closeLightbox();
+});
+
+function toggleRules(){
+  const el=document.getElementById('gate-rules');
+  const btn=document.querySelector('.rule-toggle');
+  if(el.style.display==='none'){el.style.display='block';btn.textContent='📖 閉じる';}
+  else{el.style.display='none';btn.textContent='📖 つなげ方のルールを見る';}
+}
+let toastTimer;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000);}
+
+</script>
+<!-- HINT MODAL -->
+<div id="hint-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200;padding:20px" onclick="closeHintModal()">
+  <div style="background:var(--surface);border-radius:16px;padding:28px 24px;max-width:320px;width:100%;display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center" onclick="event.stopPropagation()">
+    <div style="font-size:36px">🤔</div>
+    <div style="font-size:17px;font-weight:900">3回連続で失敗しています</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.7">前の絵のお題を見ますか？<br>見た場合もしりとりは続けられます。</div>
+    <div id="hint-reveal-area" style="display:none;background:var(--bg);border-radius:10px;padding:14px 20px;width:100%">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px">前の絵のお題は…</div>
+      <div id="hint-title-text" style="font-size:26px;font-weight:900;color:var(--accent)"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <button class="gate-btn" style="background:var(--accent3)" onclick="revealHint()">お題を見る 👀</button>
+      <button class="gate-btn" style="background:var(--surface);color:var(--ink);border:1.5px solid var(--border)" onclick="closeHintModal()">見ないで続ける</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
