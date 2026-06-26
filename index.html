@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#fff9f0;--surface:#fffdf9;--border:#e8ddd0;
@@ -353,20 +354,54 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
 <script>
 
 // ============================================================
-// LOCK
+// SUPABASE
+// ============================================================
+const SUPABASE_URL = 'https://mkcbufuhovbctlmzbtxn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_GRKftC0d-gyiFVvHC1DFkw_chP7WCEs';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================================
+// LOCK（Supabaseのlocksテーブルで管理）
 // ============================================================
 const TIMEOUT_SEC=600;
-let lockState={locked:false,lockedAt:null,timerInterval:null};
-function acquireLock(){lockState.locked=true;lockState.lockedAt=Date.now();}
-function releaseLock(){lockState.locked=false;lockState.lockedAt=null;clearInterval(lockState.timerInterval);lockState.timerInterval=null;hideLockScreen();}
-function isLocked(){if(!lockState.locked)return false;if((Date.now()-lockState.lockedAt)/1000>=TIMEOUT_SEC){releaseLock();return false;}return true;}
-function remainSec(){if(!lockState.lockedAt)return 0;return Math.max(0,TIMEOUT_SEC-Math.floor((Date.now()-lockState.lockedAt)/1000));}
-function showLockScreen(){document.getElementById('lock-screen').classList.add('show');startLockTimer();}
+let lockState={locked:false,lockedAt:null,timerInterval:null,lockedChain:null};
+
+async function acquireLock(chainIdx){
+  const label=['A','B'][chainIdx];
+  const lockedUntil=new Date(Date.now()+TIMEOUT_SEC*1000).toISOString();
+  await sb.from('locks').upsert({chain_label:label,locked_until:lockedUntil},{onConflict:'chain_label'});
+  lockState.locked=true;lockState.lockedAt=Date.now();lockState.lockedChain=chainIdx;
+}
+async function releaseLock(){
+  if(lockState.lockedChain!==null){
+    const label=['A','B'][lockState.lockedChain];
+    await sb.from('locks').delete().eq('chain_label',label);
+  }
+  lockState.locked=false;lockState.lockedAt=null;lockState.lockedChain=null;
+  clearInterval(lockState.timerInterval);lockState.timerInterval=null;
+  hideLockScreen();
+}
+async function checkLock(chainIdx){
+  const label=['A','B'][chainIdx];
+  const{data}=await sb.from('locks').select('*').eq('chain_label',label).maybeSingle();
+  if(!data)return null;
+  const until=new Date(data.locked_until).getTime();
+  if(Date.now()>=until){
+    await sb.from('locks').delete().eq('chain_label',label);
+    return null;
+  }
+  return until;
+}
+function remainSec(untilMs){return Math.max(0,Math.floor((untilMs-Date.now())/1000));}
+function showLockScreen(untilMs,chainIdx){
+  document.getElementById('lock-screen').classList.add('show');
+  startLockTimer(untilMs,chainIdx);
+}
 function hideLockScreen(){document.getElementById('lock-screen').classList.remove('show');}
-function startLockTimer(){
+function startLockTimer(untilMs,chainIdx){
   clearInterval(lockState.timerInterval);
   lockState.timerInterval=setInterval(()=>{
-    const rem=remainSec();
+    const rem=remainSec(untilMs);
     const m=String(Math.floor(rem/60)).padStart(2,'0');
     const s=String(rem%60).padStart(2,'0');
     const te=document.getElementById('lock-timer');
@@ -376,7 +411,12 @@ function startLockTimer(){
     be.style.width=(rem/TIMEOUT_SEC*100)+'%';
     te.classList.toggle('warn',rem<=60);
     be.classList.toggle('warn',rem<=60);
-    if(rem<=0){releaseLock();showToast('タイムアウト！次の人どうぞ');openChainSelect();}
+    if(rem<=0){
+      clearInterval(lockState.timerInterval);
+      hideLockScreen();
+      showToast('タイムアウト！次の人どうぞ');
+      openChainSelect();
+    }
   },1000);
 }
 
@@ -483,32 +523,69 @@ function freeDownload(){
 }
 
 // ============================================================
-// SHIRITORI MODE
+// SHIRITORI MODE（Supabase連携）
 // ============================================================
 let stEng=null;
-let chains=[[],[]]; // chains[0]=A, chains[1]=B
+let chains=[[],[]]; // ローカルキャッシュ：chains[0]=A, chains[1]=B（各item: {id,dataURL,title,revealed,fails:[{dataURL,title}]}）
 let activeChainIdx=null;
 let pendingTitle='';
 
-function startShiritori(){
+async function loadChains(){
+  const{data:chainRows}=await sb.from('chains').select('*').order('chain_label').order('position');
+  const{data:failRows}=await sb.from('fails').select('*').order('id');
+  chains=[[],[]];
+  if(chainRows){
+    chainRows.forEach(row=>{
+      const idx=row.chain_label==='A'?0:1;
+      chains[idx].push({
+        id:row.id,
+        dataURL:row.image_data,
+        title:row.title,
+        revealed:row.revealed,
+        fails:[]
+      });
+    });
+  }
+  if(failRows){
+    failRows.forEach(f=>{
+      for(const chain of chains){
+        const owner=chain.find(item=>item.id===f.chain_id);
+        if(owner){owner.fails.push({dataURL:f.image_data,title:f.title});break;}
+      }
+    });
+  }
+}
+
+async function startShiritori(){
   document.getElementById('mode-select').style.display='none';
   document.getElementById('shiritori-page').classList.add('active');
   if(!stEng){stEng=makeEngine('st-inner',560,360);buildPalette('st-palette',c=>stEng.setColor(c));}
   activeChainIdx=null;
-  if(isLocked()){showLockScreen();}else{openChainSelect();}
+  showToast('読み込み中…');
+  await loadChains();
   renderChain();
+  openChainSelect();
 }
 function setStTool(t){stEng&&stEng.setTool(t);document.querySelectorAll('[id^="st-btn-"]').forEach(b=>b.classList.remove('active'));document.getElementById('st-btn-'+t)?.classList.add('active');}
 
-function openChainSelect(){
+async function openChainSelect(){
   hideLockScreen();
   document.getElementById('title-gate').classList.add('hidden');
-  // 両方空ならA直スタート
+  await loadChains();
+  renderChain();
   if(chains[0].length===0&&chains[1].length===0){selectChain(0);return;}
   document.getElementById('chain-select-overlay').classList.remove('hidden');
   renderChainSelectOverlay();
 }
-function selectChain(idx){
+async function selectChain(idx){
+  // ロック確認
+  const lockedUntil=await checkLock(idx);
+  if(lockedUntil){
+    activeChainIdx=idx;
+    document.getElementById('chain-select-overlay').classList.add('hidden');
+    showLockScreen(lockedUntil,idx);
+    return;
+  }
   activeChainIdx=idx;
   document.getElementById('chain-select-overlay').classList.add('hidden');
   openGate();
@@ -540,42 +617,46 @@ function openGate(){
   setTimeout(()=>document.getElementById('gate-input').focus(),100);
 }
 function clearGateError(){document.getElementById('gate-error').textContent='';}
-function confirmTitle(){
+async function confirmTitle(){
   const val=document.getElementById('gate-input').value.trim();
   const err=document.getElementById('gate-error');
   if(!isHiragana(val)){err.textContent='ひらがなだけで入力してね！';return;}
   if(val.endsWith('ん')){err.textContent='「ん」で終わる言葉はNGだよ！';return;}
   pendingTitle=val;
-  acquireLock();
+  await acquireLock(activeChainIdx);
   document.getElementById('title-gate').classList.add('hidden');
   document.getElementById('confirmed-title').textContent=val;
   stEng&&stEng.clear();
   setStepActive(3);
   showToast('「'+val+'」を描こう！✏️');
 }
-function submitDrawing(){
+async function submitDrawing(){
   if(!pendingTitle){showToast('先にお題を決めてね！');openGate();return;}
   if(stEng.isEmpty()){showToast('絵を描いてから投稿してね！');return;}
   const dataURL=stEng.getDataURL();
   const chain=chains[activeChainIdx];
+  const label=['A','B'][activeChainIdx];
   setStepActive(4);
+  showToast('投稿中…');
+
   if(chain.length===0){
-    chain.push({dataURL,title:pendingTitle,revealed:false,fails:[]});
+    await sb.from('chains').insert({chain_label:label,position:0,image_data:dataURL,title:pendingTitle,revealed:false});
     showToast('投稿しました！🎉');
   } else {
     const prev=chain[chain.length-1];
     if(checkShiritori(prev.title,pendingTitle)){
-      prev.revealed=true;
-      chain.push({dataURL,title:pendingTitle,revealed:false,fails:[]});
+      await sb.from('chains').update({revealed:true}).eq('id',prev.id);
+      await sb.from('chains').insert({chain_label:label,position:chain.length,image_data:dataURL,title:pendingTitle,revealed:false});
       showToast('成功！🎉「'+prev.title+'」が公開されました！');
     } else {
-      prev.fails.push({dataURL,title:pendingTitle});
-      showToast('失敗…😢「'+pendingTitle+'」はしりとりになってなかったよ（'+prev.fails.length+'回目）');
+      await sb.from('fails').insert({chain_id:prev.id,image_data:dataURL,title:pendingTitle});
+      showToast('失敗…😢「'+pendingTitle+'」はしりとりになってなかったよ（'+(prev.fails.length+1)+'回目）');
     }
   }
-  releaseLock();
+  await releaseLock();
   pendingTitle='';
   document.getElementById('confirmed-title').textContent='—';
+  await loadChains();
   document.getElementById('chain-count').textContent='A:'+chains[0].length+' B:'+chains[1].length;
   renderChain();
   setTimeout(()=>openChainSelect(),1500);
@@ -631,13 +712,14 @@ function closeHintModal(){
   document.getElementById('hint-modal').style.display='none';
   openChainSelect();
 }
-function revealHint(){
+async function revealHint(){
   const chain=chains[activeChainIdx]||[];
   if(chain.length===0)return;
   const prev=chain[chain.length-1];
   document.getElementById('hint-title-text').textContent=prev.title;
   document.getElementById('hint-reveal-area').style.display='block';
   prev.revealed=true;
+  await sb.from('chains').update({revealed:true}).eq('id',prev.id);
   renderChain();
 }
 
@@ -645,9 +727,11 @@ function revealHint(){
 // GALLERY
 // ============================================================
 let galleryItems=[],lbIndex=0;
-function startGallery(){
+async function startGallery(){
   document.getElementById('mode-select').style.display='none';
   document.getElementById('gallery-page').classList.add('active');
+  showToast('読み込み中…');
+  await loadChains();
   renderGallery();
 }
 function renderGallery(){
