@@ -59,8 +59,12 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
 .cprev{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--border);flex-shrink:0}
 
 .canvas-area{flex:1;overflow:auto;display:flex;justify-content:center;padding:10px;background:var(--bg)}
-.canvas-inner{position:relative;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.canvas-inner{position:relative;box-shadow:0 4px 20px rgba(0,0,0,.1);transition:transform .15s;transform-origin:top center}
 .canvas-inner canvas{display:block;touch-action:none}
+.zoom-controls{display:flex;align-items:center;gap:6px}
+.zoom-btn{width:30px;height:30px;border:1.5px solid var(--border);border-radius:7px;background:var(--surface);cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.zoom-btn:hover{background:var(--bg)}
+.zoom-label{font-size:11px;font-weight:700;color:var(--muted);min-width:38px;text-align:center}
 
 #chain-view{padding:8px 12px;overflow-y:auto;display:flex;gap:8px;align-items:flex-start;background:var(--bg);border-bottom:1.5px solid var(--border);max-height:220px;flex-shrink:0;flex-direction:column;width:100%}
 .dual-row{display:flex;gap:0;align-items:flex-start;overflow-x:auto;width:100%;padding-bottom:4px}
@@ -72,14 +76,14 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
 .chain-thumb{transition:transform .15s,border-color .15s,box-shadow .15s}
 .chain-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
 .chain-node{position:relative}
-.chain-thumb{width:86px;height:64px;border:2px solid var(--border);border-radius:7px;object-fit:cover;background:#fff;display:block}
+.chain-thumb{width:64px;height:86px;border:2px solid var(--border);border-radius:7px;object-fit:cover;background:#fff;display:block}
 .chain-node.latest .chain-thumb{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,93,38,.2)}
 .chain-node.done .chain-thumb{border-color:var(--accent3)}
 .chain-lbl{font-size:9px;text-align:center;margin-top:3px;max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
 .chain-title-badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--accent3);color:#fff;font-size:8px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;max-width:86px;overflow:hidden;text-overflow:ellipsis}
 .chain-arrow{display:flex;align-items:center;padding:0 3px;color:var(--muted);font-size:16px;align-self:center;margin-bottom:16px}
 .fail-branch{margin-top:3px;display:flex;flex-direction:column;align-items:center;gap:2px}
-.fail-thumb{width:60px;height:45px;border:2px solid var(--fail);border-radius:6px;object-fit:cover;background:#fff}
+.fail-thumb{width:45px;height:60px;border:2px solid var(--fail);border-radius:6px;object-fit:cover;background:#fff}
 .fail-badge{font-size:8px;color:var(--fail);font-weight:700}
 .fail-title{font-size:8px;color:var(--muted);max-width:60px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -108,7 +112,7 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
 .gate-rules{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:11px;line-height:1.9;color:var(--ink);text-align:left;width:100%;max-width:300px}
 .gate-rules b{color:var(--accent)}
 .rule-toggle{font-size:11px;color:var(--accent2);cursor:pointer;text-decoration:underline;background:none;border:none;font-family:var(--font);padding:0}
-#gate-prev-img{width:160px;height:120px;border:2px solid var(--border);border-radius:10px;object-fit:cover;background:#eee;display:none}
+#gate-prev-img{width:130px;height:170px;border:2px solid var(--border);border-radius:10px;object-fit:cover;background:#eee;display:none}
 .gate-prev-label{font-size:10px;color:var(--muted)}
 #gate-input{width:100%;max-width:300px;height:46px;border:2.5px solid var(--border);border-radius:11px;padding:0 14px;font-family:var(--font);font-size:17px;font-weight:700;background:var(--bg);text-align:center;transition:border-color .15s}
 #gate-input:focus{outline:none;border-color:var(--accent)}
@@ -142,7 +146,7 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
 .gallery-chain{display:flex;align-items:flex-start;gap:0;padding:12px 14px;overflow-x:auto;border-bottom:1.5px solid var(--border)}
 .gallery-item{display:flex;flex-direction:column;align-items:center;flex-shrink:0;cursor:pointer}
 .gallery-item:hover .gallery-thumb{border-color:var(--accent);transform:scale(1.04)}
-.gallery-thumb{width:100px;height:75px;border:2px solid var(--border);border-radius:8px;object-fit:cover;background:#fff;transition:transform .15s,border-color .15s}
+.gallery-thumb{width:75px;height:100px;border:2px solid var(--border);border-radius:8px;object-fit:cover;background:#fff;transition:transform .15s,border-color .15s}
 .gallery-thumb.success{border-color:var(--accent3)}
 .gallery-thumb.latest{border-color:var(--accent)}
 .gallery-lbl{font-size:9px;color:var(--muted);margin-top:3px;max-width:100px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -150,7 +154,7 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
 .gallery-fail-col{display:flex;flex-direction:column;gap:4px;align-self:flex-start;margin-top:4px}
 .gallery-fail-item{display:flex;flex-direction:column;align-items:center;cursor:pointer}
 .gallery-fail-item:hover .gallery-fail-thumb{border-color:var(--fail);opacity:.85}
-.gallery-fail-thumb{width:66px;height:50px;border:2px solid var(--fail);border-radius:6px;object-fit:cover;background:#fff;transition:opacity .15s}
+.gallery-fail-thumb{width:50px;height:66px;border:2px solid var(--fail);border-radius:6px;object-fit:cover;background:#fff;transition:opacity .15s}
 .gallery-fail-lbl{font-size:8px;color:var(--fail);font-weight:700;margin-top:2px}
 .gallery-fail-title{font-size:8px;color:var(--muted);max-width:66px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -181,7 +185,7 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
     <div class="mode-card" onclick="startShiritori()">
       <div class="mode-icon">🔗</div>
       <div class="mode-name">しりとりモード</div>
-      <div class="mode-desc">前の絵を見てお題を考え<br>タイトルをつけて描く！<br>タイトルは次の人まで秘密</div>
+      <div class="mode-desc">前の絵のお題を考えて<br>しりとりになるような<br>絵を描く</div>
     </div>
     <div class="mode-card" onclick="startGallery()">
       <div class="mode-icon">🖼️</div>
@@ -197,6 +201,7 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
     <button class="back-btn" onclick="goHome()">← ホーム</button>
     <div class="header-title">🖼️ ギャラリー</div>
     <span class="header-badge" id="gallery-count">0枚</span>
+    <button class="back-btn" id="admin-toggle-btn" onclick="toggleAdminMode()" style="margin-left:6px">🔐</button>
   </div>
   <div id="gallery-body" style="flex:1;overflow-y:auto"></div>
 </div>
@@ -210,6 +215,7 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
     <div class="lightbox-nav">
       <button class="lb-btn" onclick="lbPrev()">← 前の絵</button>
       <button class="lb-btn" onclick="lbNext()">次の絵 →</button>
+      <button class="lb-btn" id="lb-delete-btn" style="display:none;background:var(--fail);border-color:var(--fail)" onclick="deleteCurrentLightboxItem()">🗑️ 削除</button>
       <button class="lb-btn close" onclick="closeLightbox()">✕ 閉じる</button>
     </div>
   </div>
@@ -226,7 +232,7 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
     <button class="tool-btn" id="free-btn-brush" data-tip="ブラシ" onclick="setFreeTool('brush')">🖌️</button>
     <button class="tool-btn" id="free-btn-spray" data-tip="スプレー" onclick="setFreeTool('spray')">💨</button>
     <button class="tool-btn" id="free-btn-eraser" data-tip="消しゴム" onclick="setFreeTool('eraser')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="18" height="18"><rect x="2" y="6" width="16" height="10" rx="1.5" fill="#f0e6ff" stroke="#7a5c99" stroke-width="1.3"/><rect x="2" y="6" width="6" height="10" rx="1.5" fill="#c9a0e8" stroke="#7a5c99" stroke-width="1.3"/><line x1="8" y1="6" x2="8" y2="16" stroke="#7a5c99" stroke-width="1"/><rect x="3" y="14.5" width="14" height="2" rx="0.5" fill="#d4c4e0" opacity="0.5"/></svg></button>
-    <button class="tool-btn" id="free-btn-fill" data-tip="塗りつぶし" onclick="setFreeTool('fill')">🪣</button><button class="tool-btn" id="free-btn-line" data-tip="直線" onclick="setFreeTool('line')"><svg viewBox="0 0 20 20" width="16" height="16"><line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="tool-btn" id="free-btn-rect" data-tip="四角形" onclick="setFreeTool('rect')"><svg viewBox="0 0 20 20" width="16" height="16"><rect x="3" y="4" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+    <button class="tool-btn" id="free-btn-fill" data-tip="塗りつぶし" onclick="setFreeTool('fill')">🪣</button><button class="tool-btn" id="free-btn-line" data-tip="直線" onclick="setFreeTool('line')"><svg viewBox="0 0 20 20" width="16" height="16"><line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="tool-btn" id="free-btn-rect" data-tip="四角形" onclick="setFreeTool('rect')"><svg viewBox="0 0 20 20" width="16" height="16"><rect x="3" y="4" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg></button><button class="tool-btn" id="free-btn-circle" data-tip="丸" onclick="setFreeTool('circle')"><svg viewBox="0 0 20 20" width="16" height="16"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
     <div class="sep"></div>
     <div class="rainbow-btn" data-tip="色を選ぶ" onclick="document.getElementById('free-cpick').click()"><div class="rainbow-dot" id="free-dot"></div><input type="color" id="free-cpick" value="#000000" oninput="freeEng&&freeEng.setColor(this.value);document.getElementById('free-dot').style.background=this.value"></div>
     <div class="sep"></div>
@@ -239,7 +245,15 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
     <button class="tool-btn" data-tip="やり直す" onclick="freeEng&&freeEng.redo()">↪️</button>
     <button class="tool-btn" data-tip="全消去" onclick="freeEng&&freeEng.clear()">🗑️</button>
   </div>
-  <div class="palette-bar" id="free-palette"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px">
+    <div class="palette-bar" id="free-palette" style="flex:1;border-bottom:none;padding:5px 0"></div>
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomCanvas('free',-1)">－</button>
+      <span class="zoom-label" id="free-zoom-label">100%</span>
+      <button class="zoom-btn" onclick="zoomCanvas('free',1)">＋</button>
+    </div>
+  </div>
+  <div style="border-bottom:1.5px solid var(--border)"></div>
   <div class="canvas-area"><div class="canvas-inner" id="free-inner"></div></div>
 </div>
 
@@ -265,7 +279,7 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
       <button class="tool-btn" id="st-btn-brush" data-tip="ブラシ" onclick="setStTool('brush')">🖌️</button>
       <button class="tool-btn" id="st-btn-spray" data-tip="スプレー" onclick="setStTool('spray')">💨</button>
       <button class="tool-btn" id="st-btn-eraser" data-tip="消しゴム" onclick="setStTool('eraser')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="18" height="18"><rect x="2" y="6" width="16" height="10" rx="1.5" fill="#f0e6ff" stroke="#7a5c99" stroke-width="1.3"/><rect x="2" y="6" width="6" height="10" rx="1.5" fill="#c9a0e8" stroke="#7a5c99" stroke-width="1.3"/><line x1="8" y1="6" x2="8" y2="16" stroke="#7a5c99" stroke-width="1"/><rect x="3" y="14.5" width="14" height="2" rx="0.5" fill="#d4c4e0" opacity="0.5"/></svg></button>
-      <button class="tool-btn" id="st-btn-fill" data-tip="塗りつぶし" onclick="setStTool('fill')">🪣</button><button class="tool-btn" id="st-btn-line" data-tip="直線" onclick="setStTool('line')"><svg viewBox="0 0 20 20" width="16" height="16"><line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="tool-btn" id="st-btn-rect" data-tip="四角形" onclick="setStTool('rect')"><svg viewBox="0 0 20 20" width="16" height="16"><rect x="3" y="4" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+      <button class="tool-btn" id="st-btn-fill" data-tip="塗りつぶし" onclick="setStTool('fill')">🪣</button><button class="tool-btn" id="st-btn-line" data-tip="直線" onclick="setStTool('line')"><svg viewBox="0 0 20 20" width="16" height="16"><line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button><button class="tool-btn" id="st-btn-rect" data-tip="四角形" onclick="setStTool('rect')"><svg viewBox="0 0 20 20" width="16" height="16"><rect x="3" y="4" width="14" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></svg></button><button class="tool-btn" id="st-btn-circle" data-tip="丸" onclick="setStTool('circle')"><svg viewBox="0 0 20 20" width="16" height="16"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
       <div class="sep"></div>
       <div class="rainbow-btn" data-tip="色を選ぶ" onclick="document.getElementById('st-cpick').click()"><div class="rainbow-dot" id="st-dot"></div><input type="color" id="st-cpick" value="#000000" oninput="stEng&&stEng.setColor(this.value);document.getElementById('st-dot').style.background=this.value"></div>
       <div class="sep"></div>
@@ -276,7 +290,15 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
       <button class="tool-btn" data-tip="やり直す" onclick="stEng&&stEng.redo()">↪️</button>
       <button class="tool-btn" data-tip="全消去" onclick="stEng&&stEng.clear()">🗑️</button>
     </div>
-    <div class="palette-bar" id="st-palette"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px">
+      <div class="palette-bar" id="st-palette" style="flex:1;border-bottom:none;padding:5px 0"></div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomCanvas('st',-1)">－</button>
+        <span class="zoom-label" id="st-zoom-label">100%</span>
+        <button class="zoom-btn" onclick="zoomCanvas('st',1)">＋</button>
+      </div>
+    </div>
+    <div style="border-bottom:1.5px solid var(--border)"></div>
     <div class="canvas-area"><div class="canvas-inner" id="st-inner"></div></div>
     <div id="st-submit-bar">
       <span class="confirmed-lbl">お題：</span>
@@ -293,13 +315,13 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
   <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
     <div onclick="selectChain(0)" style="cursor:pointer;background:var(--surface);border:2.5px solid var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;width:150px;transition:transform .15s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform=''">
       <div style="font-size:12px;font-weight:700;color:var(--accent)">🅰 チェーンA</div>
-      <img id="chain-select-img-a" src="" style="width:120px;height:90px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border);display:none">
+      <img id="chain-select-img-a" src="" style="width:90px;height:120px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border);display:none">
       <div id="chain-select-lbl-a" style="font-size:11px;color:var(--muted);text-align:center">まだ絵がありません</div>
       <div id="chain-select-cnt-a" style="font-size:10px;color:var(--muted)">0枚</div>
     </div>
     <div onclick="selectChain(1)" style="cursor:pointer;background:var(--surface);border:2.5px solid var(--accent2);border-radius:14px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;width:150px;transition:transform .15s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform=''">
       <div style="font-size:12px;font-weight:700;color:var(--accent2)">🅱 チェーンB</div>
-      <img id="chain-select-img-b" src="" style="width:120px;height:90px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border);display:none">
+      <img id="chain-select-img-b" src="" style="width:90px;height:120px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border);display:none">
       <div id="chain-select-lbl-b" style="font-size:11px;color:var(--muted);text-align:center">まだ絵がありません</div>
       <div id="chain-select-cnt-b" style="font-size:10px;color:var(--muted)">0枚</div>
     </div>
@@ -485,14 +507,14 @@ function makeEngine(wrapperId,W,H){
   function prep(){ctx.globalCompositeOperation=tool==='eraser'?'destination-out':blend;ctx.globalAlpha=tool==='brush'?opacity*0.3:opacity;ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=tool==='brush'?size*2:size;ctx.lineCap='round';ctx.lineJoin='round';}
   function spray(x,y){ctx.globalCompositeOperation=blend;ctx.globalAlpha=opacity*0.05;const r=size*2;for(let i=0;i<20;i++){const a=Math.random()*Math.PI*2,d=Math.random()*r;ctx.fillStyle=color;ctx.fillRect(x+Math.cos(a)*d,y+Math.sin(a)*d,2,2);}}
   function fill(sx2,sy2){const id=ctx.getImageData(0,0,W,H),d=id.data;const i0=(Math.floor(sy2)*W+Math.floor(sx2))*4;const tr=d[i0],tg=d[i0+1],tb=d[i0+2],ta=d[i0+3];const cr=parseInt(color.slice(1,3),16),cg=parseInt(color.slice(3,5),16),cb=parseInt(color.slice(5,7),16);if(tr===cr&&tg===cg&&tb===cb&&ta===255)return;const stack=[[Math.floor(sx2),Math.floor(sy2)]],vis=new Uint8Array(W*H);while(stack.length){const[x,y]=stack.pop();if(x<0||x>=W||y<0||y>=H)continue;const i=(y*W+x)*4;if(vis[y*W+x])continue;if(Math.abs(d[i]-tr)>30||Math.abs(d[i+1]-tg)>30||Math.abs(d[i+2]-tb)>30||Math.abs(d[i+3]-ta)>30)continue;vis[y*W+x]=1;d[i]=cr;d[i+1]=cg;d[i+2]=cb;d[i+3]=Math.round(opacity*255);stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);}ctx.putImageData(id,0,0);saveH();}
-  function drawPreview(ex,ey){pvCtx.clearRect(0,0,W,H);pvCtx.globalAlpha=opacity;pvCtx.strokeStyle=color;pvCtx.lineWidth=size;pvCtx.lineCap='round';pvCtx.lineJoin='round';if(tool==='line'){pvCtx.beginPath();pvCtx.moveTo(startX,startY);pvCtx.lineTo(ex,ey);pvCtx.stroke();}else if(tool==='rect'){pvCtx.beginPath();pvCtx.rect(startX,startY,ex-startX,ey-startY);pvCtx.stroke();}}
-  function commitShape(ex,ey){ctx.globalCompositeOperation=blend;ctx.globalAlpha=opacity;ctx.strokeStyle=color;ctx.lineWidth=size;ctx.lineCap='round';ctx.lineJoin='round';if(tool==='line'){ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(ex,ey);ctx.stroke();}else if(tool==='rect'){ctx.beginPath();ctx.rect(startX,startY,ex-startX,ey-startY);ctx.stroke();}pvCtx.clearRect(0,0,W,H);}
+  function drawPreview(ex,ey){pvCtx.clearRect(0,0,W,H);pvCtx.globalAlpha=opacity;pvCtx.strokeStyle=color;pvCtx.lineWidth=size;pvCtx.lineCap='round';pvCtx.lineJoin='round';if(tool==='line'){pvCtx.beginPath();pvCtx.moveTo(startX,startY);pvCtx.lineTo(ex,ey);pvCtx.stroke();}else if(tool==='rect'){pvCtx.beginPath();pvCtx.rect(startX,startY,ex-startX,ey-startY);pvCtx.stroke();}else if(tool==='circle'){const r=Math.hypot(ex-startX,ey-startY);pvCtx.beginPath();pvCtx.arc(startX,startY,r,0,Math.PI*2);pvCtx.stroke();}}
+  function commitShape(ex,ey){ctx.globalCompositeOperation=blend;ctx.globalAlpha=opacity;ctx.strokeStyle=color;ctx.lineWidth=size;ctx.lineCap='round';ctx.lineJoin='round';if(tool==='line'){ctx.beginPath();ctx.moveTo(startX,startY);ctx.lineTo(ex,ey);ctx.stroke();}else if(tool==='rect'){ctx.beginPath();ctx.rect(startX,startY,ex-startX,ey-startY);ctx.stroke();}else if(tool==='circle'){const r=Math.hypot(ex-startX,ey-startY);ctx.beginPath();ctx.arc(startX,startY,r,0,Math.PI*2);ctx.stroke();}pvCtx.clearRect(0,0,W,H);}
   function saveH(){hist=hist.slice(0,hIdx+1);const t=document.createElement('canvas');t.width=W;t.height=H;t.getContext('2d').drawImage(lc,0,0);hist.push(t.toDataURL());if(hist.length>30)hist.shift();hIdx=hist.length-1;}
   function restore(data){const img=new Image();img.src=data;img.onload=()=>{ctx.clearRect(0,0,W,H);ctx.drawImage(img,0,0);};}
-  ov.addEventListener('pointerdown',e=>{drawing=true;const p=pos(e);if(tool==='fill'){fill(p.x,p.y);return;}if(tool==='line'||tool==='rect'){startX=p.x;startY=p.y;ov.setPointerCapture(e.pointerId);return;}prep();ctx.beginPath();ctx.moveTo(p.x,p.y);if(tool==='spray')spray(p.x,p.y);ov.setPointerCapture(e.pointerId);});
-  ov.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);if(tool==='line'||tool==='rect'){drawPreview(p.x,p.y);return;}if(tool==='spray')spray(p.x,p.y);else{ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);}});
-  ov.addEventListener('pointerup',e=>{if(!drawing)return;const p=pos(e);if(tool==='line'||tool==='rect')commitShape(p.x,p.y);drawing=false;saveH();});
-  ov.addEventListener('pointerleave',()=>{if(drawing&&tool!=='line'&&tool!=='rect'){drawing=false;saveH();}});
+  ov.addEventListener('pointerdown',e=>{drawing=true;const p=pos(e);if(tool==='fill'){fill(p.x,p.y);return;}if(tool==='line'||tool==='rect'||tool==='circle'){startX=p.x;startY=p.y;ov.setPointerCapture(e.pointerId);return;}prep();ctx.beginPath();ctx.moveTo(p.x,p.y);if(tool==='spray')spray(p.x,p.y);ov.setPointerCapture(e.pointerId);});
+  ov.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);if(tool==='line'||tool==='rect'||tool==='circle'){drawPreview(p.x,p.y);return;}if(tool==='spray')spray(p.x,p.y);else{ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);}});
+  ov.addEventListener('pointerup',e=>{if(!drawing)return;const p=pos(e);if(tool==='line'||tool==='rect'||tool==='circle')commitShape(p.x,p.y);drawing=false;saveH();});
+  ov.addEventListener('pointerleave',()=>{if(drawing&&tool!=='line'&&tool!=='rect'&&tool!=='circle'){drawing=false;saveH();}});
   saveH();
   return{
     setTool(t){tool=t},setColor(c){color=c},setSize(s){size=s},setOpacity(o){opacity=o},setBlend(b){blend=b},
@@ -504,13 +526,33 @@ function makeEngine(wrapperId,W,H){
 }
 
 // ============================================================
+// ZOOM
+// ============================================================
+let zoomLevels={free:1,st:1};
+const ZOOM_STEPS=[0.5,0.6,0.75,0.85,1,1.15,1.3,1.5,1.75,2,2.5,3,3.5,4];
+function zoomCanvas(which,dir){
+  const cur=zoomLevels[which];
+  let idx=ZOOM_STEPS.reduce((bi,v,i)=>Math.abs(v-cur)<Math.abs(ZOOM_STEPS[bi]-cur)?i:bi,0);
+  idx=Math.max(0,Math.min(ZOOM_STEPS.length-1,idx+dir));
+  const newZoom=ZOOM_STEPS[idx];
+  zoomLevels[which]=newZoom;
+  const innerId=which==='free'?'free-inner':'st-inner';
+  const labelId=which==='free'?'free-zoom-label':'st-zoom-label';
+  document.getElementById(innerId).style.transform='scale('+newZoom+')';
+  document.getElementById(labelId).textContent=Math.round(newZoom*100)+'%';
+}
+
+// ============================================================
 // FREE MODE
 // ============================================================
 let freeEng=null;
 function startFree(){
   document.getElementById('mode-select').style.display='none';
   document.getElementById('free-page').classList.add('active');
-  if(!freeEng){freeEng=makeEngine('free-inner',660,440);buildPalette('free-palette',c=>freeEng.setColor(c));}
+  if(!freeEng){freeEng=makeEngine('free-inner',440,660);buildPalette('free-palette',c=>freeEng.setColor(c));}
+  zoomLevels.free=1;
+  document.getElementById('free-inner').style.transform='scale(1)';
+  document.getElementById('free-zoom-label').textContent='100%';
 }
 function setFreeTool(t){freeEng&&freeEng.setTool(t);document.querySelectorAll('[id^="free-btn-"]').forEach(b=>b.classList.remove('active'));document.getElementById('free-btn-'+t)?.classList.add('active');}
 function getTimestamp(){const n=new Date();const pad=x=>String(x).padStart(2,'0');return n.getFullYear()+pad(n.getMonth()+1)+pad(n.getDate())+'_'+pad(n.getHours())+pad(n.getMinutes())+pad(n.getSeconds());}
@@ -550,7 +592,7 @@ async function loadChains(){
     failRows.forEach(f=>{
       for(const chain of chains){
         const owner=chain.find(item=>item.id===f.chain_id);
-        if(owner){owner.fails.push({dataURL:f.image_data,title:f.title});break;}
+        if(owner){owner.fails.push({id:f.id,dataURL:f.image_data,title:f.title});break;}
       }
     });
   }
@@ -559,7 +601,10 @@ async function loadChains(){
 async function startShiritori(){
   document.getElementById('mode-select').style.display='none';
   document.getElementById('shiritori-page').classList.add('active');
-  if(!stEng){stEng=makeEngine('st-inner',560,360);buildPalette('st-palette',c=>stEng.setColor(c));}
+  if(!stEng){stEng=makeEngine('st-inner',360,560);buildPalette('st-palette',c=>stEng.setColor(c));}
+  zoomLevels.st=1;
+  document.getElementById('st-inner').style.transform='scale(1)';
+  document.getElementById('st-zoom-label').textContent='100%';
   activeChainIdx=null;
   showToast('読み込み中…');
   await loadChains();
@@ -745,7 +790,7 @@ function renderGallery(){
     chain.forEach((item,i)=>{
       if(i>0){const arr=document.createElement('div');arr.className='gallery-arrow';arr.textContent='→';row.appendChild(arr);}
       const idx=galleryItems.length;
-      galleryItems.push({dataURL:item.dataURL,title:item.revealed?item.title:null,type:'main',pos:i+1,chainLabel:label});
+      galleryItems.push({id:item.id,dataURL:item.dataURL,title:item.revealed?item.title:null,type:'main',pos:i+1,chainLabel:label,chainIdx:ci,itemIdx:i});
       const gi=document.createElement('div');gi.className='gallery-item';
       const img=document.createElement('img');img.className='gallery-thumb '+(i===chain.length-1?'latest':'success');
       img.src=item.dataURL;img.onclick=()=>openLightbox(idx);gi.appendChild(img);
@@ -754,7 +799,7 @@ function renderGallery(){
       if(item.fails&&item.fails.length>0){
         const fc=document.createElement('div');fc.className='gallery-fail-col';
         item.fails.forEach(f=>{
-          const fidx=galleryItems.length;galleryItems.push({dataURL:f.dataURL,title:f.title,type:'fail',pos:i+1,chainLabel:label});
+          const fidx=galleryItems.length;galleryItems.push({id:f.id,dataURL:f.dataURL,title:f.title,type:'fail',pos:i+1,chainLabel:label});
           const fi=document.createElement('div');fi.className='gallery-fail-item';
           const fimg=document.createElement('img');fimg.className='gallery-fail-thumb';fimg.src=f.dataURL;fimg.onclick=()=>openLightbox(fidx);fi.appendChild(fimg);
           const fb=document.createElement('div');fb.className='gallery-fail-lbl';fb.textContent='❌ 失敗';fi.appendChild(fb);
@@ -777,6 +822,55 @@ function updateLightbox(){
   const te=document.getElementById('lightbox-title');
   if(item.title){te.textContent=item.title;te.className='lightbox-title';}else{te.textContent='タイトルはまだ秘密 🙈';te.className='lightbox-title hidden-title';}
   document.getElementById('lightbox-meta').textContent=(lbIndex+1)+' / '+galleryItems.length+'　'+(item.type==='fail'?'❌ 失敗作':'✅ チェーン'+item.chainLabel+' No.'+item.pos);
+  document.getElementById('lb-delete-btn').style.display=isAdminMode?'inline-block':'none';
+}
+
+// ============================================================
+// ADMIN MODE（管理者として絵を削除できる）
+// ============================================================
+const ADMIN_PASSWORD='siri2026'; // 管理者用の合言葉
+let isAdminMode=false;
+
+function toggleAdminMode(){
+  if(isAdminMode){
+    isAdminMode=false;
+    document.getElementById('admin-toggle-btn').textContent='🔐';
+    document.getElementById('admin-toggle-btn').style.background='';
+    showToast('管理者モードを終了しました');
+    if(document.getElementById('lightbox').classList.contains('show'))updateLightbox();
+    return;
+  }
+  const pw=prompt('管理者の合言葉を入力してください');
+  if(pw===null)return;
+  if(pw===ADMIN_PASSWORD){
+    isAdminMode=true;
+    document.getElementById('admin-toggle-btn').textContent='🔓';
+    document.getElementById('admin-toggle-btn').style.background='var(--fail)';
+    showToast('管理者モードON：絵を削除できます');
+    if(document.getElementById('lightbox').classList.contains('show'))updateLightbox();
+  } else {
+    showToast('合言葉が違います');
+  }
+}
+
+async function deleteCurrentLightboxItem(){
+  if(!isAdminMode)return;
+  const item=galleryItems[lbIndex];
+  if(!item)return;
+  const ok=confirm('この絵を本当に削除しますか？\nこの操作は取り消せません。');
+  if(!ok)return;
+
+  showToast('削除中…');
+  if(item.type==='fail'){
+    await sb.from('fails').delete().eq('id',item.id);
+  } else {
+    // メインチェーンの絵を削除：関連する fails も連動削除（DB外部キーのcascadeで自動）
+    await sb.from('chains').delete().eq('id',item.id);
+  }
+  await loadChains();
+  renderGallery();
+  closeLightbox();
+  showToast('削除しました 🗑️');
 }
 document.addEventListener('keydown',e=>{
   if(!document.getElementById('lightbox').classList.contains('show'))return;
