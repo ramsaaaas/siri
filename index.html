@@ -179,7 +179,7 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
   <div class="mode-cards">
     <div class="mode-card" onclick="startFree()">
       <div class="mode-icon">✏️</div>
-      <div class="mode-name">自由モード</div>
+      <div class="mode-name">フリーモード</div>
       <div class="mode-desc">自由に描いてDL保存</div>
     </div>
     <div class="mode-card" onclick="startShiritori()">
@@ -190,7 +190,7 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
     <div class="mode-card" onclick="startGallery()">
       <div class="mode-icon">🖼️</div>
       <div class="mode-name">ギャラリー</div>
-      <div class="mode-desc">しりとりの過去の絵を<br>まとめて閲覧できるよ</div>
+      <div class="mode-desc">しりとり・フリーモードの<br>過去の絵をまとめて閲覧できるよ</div>
     </div>
   </div>
 </div>
@@ -202,6 +202,10 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
     <div class="header-title">🖼️ ギャラリー</div>
     <span class="header-badge" id="gallery-count">0枚</span>
     <button class="back-btn" id="admin-toggle-btn" onclick="toggleAdminMode()" style="margin-left:6px">🔐</button>
+  </div>
+  <div style="display:flex;gap:0;border-bottom:1.5px solid var(--border);background:var(--surface)">
+    <button class="gallery-tab active" id="gallery-tab-shiritori" onclick="switchGalleryTab('shiritori')" style="flex:1;padding:10px;border:none;background:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;color:var(--accent);border-bottom:2.5px solid var(--accent)">🔗 しりとり</button>
+    <button class="gallery-tab" id="gallery-tab-free" onclick="switchGalleryTab('free')" style="flex:1;padding:10px;border:none;background:none;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;color:var(--muted);border-bottom:2.5px solid transparent">✏️ フリー</button>
   </div>
   <div id="gallery-body" style="flex:1;overflow-y:auto"></div>
 </div>
@@ -221,11 +225,26 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
   </div>
 </div>
 
+<!-- FREE POST MODAL -->
+<div id="free-post-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200;padding:20px" onclick="closeFreePostModal()">
+  <div style="background:var(--surface);border-radius:16px;padding:24px;max-width:320px;width:100%;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center" onclick="event.stopPropagation()">
+    <div style="font-size:16px;font-weight:900">この絵を投稿する</div>
+    <img id="free-post-preview" src="" style="width:160px;height:auto;max-height:220px;border:2px solid var(--border);border-radius:10px;object-fit:contain;background:#fff">
+    <input id="free-post-signature" type="text" placeholder="署名（空欄なら匿名）" maxlength="12"
+      style="width:100%;height:40px;border:1.5px solid var(--border);border-radius:9px;padding:0 12px;font-family:var(--font);font-size:14px;background:var(--bg);text-align:center">
+    <div style="display:flex;gap:10px;width:100%">
+      <button class="gate-btn" style="flex:1;background:var(--accent3)" onclick="submitFreePost()">投稿する 🎉</button>
+      <button class="gate-btn" style="flex:1;background:var(--surface);color:var(--ink);border:1.5px solid var(--border)" onclick="closeFreePostModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <div id="free-page" class="page">
   <div class="app-header">
     <button class="back-btn" onclick="goHome()">← ホーム</button>
-    <div class="header-title">✏️ 自由モード</div>
+    <div class="header-title">✏️ フリーモード</div>
     <button class="submit-btn" onclick="freeDownload()">💾 保存</button>
+    <button class="submit-btn" style="background:var(--accent3)" onclick="openFreePostModal()">📮 投稿</button>
   </div>
   <div class="toolbar">
     <button class="tool-btn active" id="free-btn-pen" data-tip="ペン" onclick="setFreeTool('pen')">✏️</button>
@@ -345,8 +364,11 @@ input[type=color]{position:absolute;width:0;height:0;opacity:0;pointer-events:no
         ・ひらがなのみ入力できます
       </div>
       <input id="gate-input" type="text" placeholder="例：ねこ、すいか…" maxlength="20"
-        oninput="clearGateError()" onkeydown="if(event.key==='Enter')confirmTitle()">
+        oninput="clearGateError()" onkeydown="if(event.key==='Enter')document.getElementById('gate-signature').focus()">
       <div id="gate-error"></div>
+      <input id="gate-signature" type="text" placeholder="署名（空欄なら匿名）" maxlength="12"
+        style="width:100%;max-width:300px;height:38px;border:1.5px solid var(--border);border-radius:9px;padding:0 12px;font-family:var(--font);font-size:13px;background:var(--surface);text-align:center"
+        onkeydown="if(event.key==='Enter')confirmTitle()">
       <button class="gate-btn" onclick="confirmTitle()">このお題で描く！</button>
     </div>
 
@@ -556,7 +578,7 @@ function makeEngine(wrapperId,W,H){
   function saveH(){hist=hist.slice(0,hIdx+1);const t=document.createElement('canvas');t.width=W;t.height=H;t.getContext('2d').drawImage(lc,0,0);hist.push(t.toDataURL());if(hist.length>30)hist.shift();hIdx=hist.length-1;}
   function restore(data){const img=new Image();img.src=data;img.onload=()=>{ctx.clearRect(0,0,W,H);ctx.drawImage(img,0,0);};}
   ov.addEventListener('pointerdown',e=>{drawing=true;const p=pos(e);if(tool==='fill'){fill(p.x,p.y);return;}if(tool==='line'||tool==='rect'||tool==='circle'){startX=p.x;startY=p.y;ov.setPointerCapture(e.pointerId);return;}prep();ctx.beginPath();ctx.moveTo(p.x,p.y);if(tool==='spray')spray(p.x,p.y);ov.setPointerCapture(e.pointerId);});
-  ov.addEventListener('pointermove',e=>{if(!drawing)return;const p=pos(e);if(tool==='line'||tool==='rect'||tool==='circle'){drawPreview(p.x,p.y);return;}if(tool==='spray')spray(p.x,p.y);else{ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);}});
+  ov.addEventListener('pointermove',e=>{if(!drawing)return;if(tool==='fill')return;const p=pos(e);if(tool==='line'||tool==='rect'||tool==='circle'){drawPreview(p.x,p.y);return;}if(tool==='spray')spray(p.x,p.y);else{ctx.lineTo(p.x,p.y);ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);}});
   ov.addEventListener('pointerup',e=>{if(!drawing)return;const p=pos(e);if(tool==='line'||tool==='rect'||tool==='circle')commitShape(p.x,p.y);drawing=false;saveH();});
   ov.addEventListener('pointerleave',()=>{if(drawing&&tool!=='line'&&tool!=='rect'&&tool!=='circle'){drawing=false;saveH();}});
   saveH();
@@ -609,6 +631,29 @@ function freeDownload(){
 }
 
 // ============================================================
+// FREE MODE POST（投稿してギャラリーに載せる）
+// ============================================================
+function openFreePostModal(){
+  if(!freeEng||freeEng.isEmpty()){showToast('絵を描いてから投稿してね！');return;}
+  document.getElementById('free-post-preview').src=freeEng.getDataURL();
+  document.getElementById('free-post-signature').value='';
+  document.getElementById('free-post-modal').style.display='flex';
+}
+function closeFreePostModal(){
+  document.getElementById('free-post-modal').style.display='none';
+}
+async function submitFreePost(){
+  if(!freeEng)return;
+  const signature=document.getElementById('free-post-signature').value.trim()||'匿名';
+  const dataURL=freeEng.getDataURL();
+  closeFreePostModal();
+  showToast('投稿中…');
+  const{error}=await sb.from('free_drawings').insert({image_data:dataURL,signature});
+  if(error){showToast('投稿に失敗しました…');console.error(error);return;}
+  showToast('投稿しました！🎉 ギャラリーで見られます');
+}
+
+// ============================================================
 // SHIRITORI MODE（Supabase連携）
 // ============================================================
 let stEng=null;
@@ -628,6 +673,7 @@ async function loadChains(){
         dataURL:row.image_data,
         title:row.title,
         revealed:row.revealed,
+        signature:row.signature||'匿名',
         fails:[]
       });
     });
@@ -636,7 +682,7 @@ async function loadChains(){
     failRows.forEach(f=>{
       for(const chain of chains){
         const owner=chain.find(item=>item.id===f.chain_id);
-        if(owner){owner.fails.push({id:f.id,dataURL:f.image_data,title:f.title});break;}
+        if(owner){owner.fails.push({id:f.id,dataURL:f.image_data,title:f.title,signature:f.signature||'匿名'});break;}
       }
     });
   }
@@ -705,6 +751,8 @@ function openGate(){
   setStepActive(2);
   setTimeout(()=>document.getElementById('gate-input').focus(),100);
 }
+let pendingSignature='';
+
 function clearGateError(){document.getElementById('gate-error').textContent='';}
 async function confirmTitle(){
   const val=document.getElementById('gate-input').value.trim();
@@ -712,6 +760,7 @@ async function confirmTitle(){
   if(!isHiragana(val)){err.textContent='ひらがなだけで入力してね！';return;}
   if(val.endsWith('ん')){err.textContent='「ん」で終わる言葉はNGだよ！';return;}
   pendingTitle=val;
+  pendingSignature=document.getElementById('gate-signature').value.trim();
   await acquireLock(activeChainIdx);
   document.getElementById('title-gate').classList.add('hidden');
   document.getElementById('confirmed-title').textContent=val;
@@ -725,25 +774,28 @@ async function submitDrawing(){
   const dataURL=stEng.getDataURL();
   const chain=chains[activeChainIdx];
   const label=['A','B'][activeChainIdx];
+  const signature=pendingSignature||'匿名';
   setStepActive(4);
   showToast('投稿中…');
 
   if(chain.length===0){
-    await sb.from('chains').insert({chain_label:label,position:0,image_data:dataURL,title:pendingTitle,revealed:false});
+    await sb.from('chains').insert({chain_label:label,position:0,image_data:dataURL,title:pendingTitle,revealed:false,signature});
     showToast('投稿しました！🎉');
   } else {
     const prev=chain[chain.length-1];
     if(checkShiritori(prev.title,pendingTitle)){
       await sb.from('chains').update({revealed:true}).eq('id',prev.id);
-      await sb.from('chains').insert({chain_label:label,position:chain.length,image_data:dataURL,title:pendingTitle,revealed:false});
+      await sb.from('chains').insert({chain_label:label,position:chain.length,image_data:dataURL,title:pendingTitle,revealed:false,signature});
       showToast('成功！🎉「'+prev.title+'」が公開されました！');
     } else {
-      await sb.from('fails').insert({chain_id:prev.id,image_data:dataURL,title:pendingTitle});
+      await sb.from('fails').insert({chain_id:prev.id,image_data:dataURL,title:pendingTitle,signature});
       showToast('失敗…😢「'+pendingTitle+'」はしりとりになってなかったよ（'+(prev.fails.length+1)+'回目）');
     }
   }
   await releaseLock();
   pendingTitle='';
+  pendingSignature='';
+  document.getElementById('gate-signature').value='';
   document.getElementById('confirmed-title').textContent='—';
   await loadChains();
   document.getElementById('chain-count').textContent='A:'+chains[0].length+' B:'+chains[1].length;
@@ -765,7 +817,8 @@ function renderChainRow(chain,label,colorClass,el){
     if(item.revealed){const b=document.createElement('div');b.className='chain-title-badge';b.textContent=item.title;node.appendChild(b);}
     const lbl=document.createElement('div');lbl.className='chain-lbl';lbl.textContent=item.revealed?'✅ '+item.title:'🙈 ???';node.appendChild(lbl);
     col.appendChild(node);
-    if(item.fails&&item.fails.length>0){item.fails.forEach(f=>{const fb=document.createElement('div');fb.className='fail-branch';const fi=document.createElement('img');fi.className='fail-thumb';fi.src=f.dataURL;fb.appendChild(fi);const b2=document.createElement('div');b2.className='fail-badge';b2.textContent='❌ 失敗';fb.appendChild(b2);const t2=document.createElement('div');t2.className='fail-title';t2.textContent=f.title;fb.appendChild(t2);col.appendChild(fb);});}
+    const sig=document.createElement('div');sig.style.cssText='font-size:8px;color:var(--muted);margin-top:1px';sig.textContent=(item.signature||'匿名')+'作';col.appendChild(sig);
+    if(item.fails&&item.fails.length>0){item.fails.forEach(f=>{const fb=document.createElement('div');fb.className='fail-branch';const fi=document.createElement('img');fi.className='fail-thumb';fi.src=f.dataURL;fb.appendChild(fi);const b2=document.createElement('div');b2.className='fail-badge';b2.textContent='❌ 失敗';fb.appendChild(b2);const t2=document.createElement('div');t2.className='fail-title';t2.textContent=f.title;fb.appendChild(t2);const fsig=document.createElement('div');fsig.style.cssText='font-size:7px;color:var(--muted)';fsig.textContent=(f.signature||'匿名')+'作';fb.appendChild(fsig);col.appendChild(fb);});}
     row.appendChild(col);
   });
   wrap.appendChild(row);el.appendChild(wrap);
@@ -816,14 +869,66 @@ async function revealHint(){
 // GALLERY
 // ============================================================
 let galleryItems=[],lbIndex=0;
+let currentGalleryTab='shiritori';
+let freeDrawings=[];
+
 async function startGallery(){
   document.getElementById('mode-select').style.display='none';
   document.getElementById('gallery-page').classList.add('active');
+  currentGalleryTab='shiritori';
+  document.getElementById('gallery-tab-shiritori').classList.add('active');
+  document.getElementById('gallery-tab-shiritori').style.color='var(--accent)';
+  document.getElementById('gallery-tab-shiritori').style.borderBottomColor='var(--accent)';
+  document.getElementById('gallery-tab-free').style.color='var(--muted)';
+  document.getElementById('gallery-tab-free').style.borderBottomColor='transparent';
   showToast('読み込み中…');
   await loadChains();
-  renderGallery();
+  renderShiritoriGallery();
 }
-function renderGallery(){
+async function switchGalleryTab(tab){
+  currentGalleryTab=tab;
+  const sTab=document.getElementById('gallery-tab-shiritori');
+  const fTab=document.getElementById('gallery-tab-free');
+  if(tab==='shiritori'){
+    sTab.style.color='var(--accent)';sTab.style.borderBottomColor='var(--accent)';
+    fTab.style.color='var(--muted)';fTab.style.borderBottomColor='transparent';
+    showToast('読み込み中…');
+    await loadChains();
+    renderShiritoriGallery();
+  } else {
+    fTab.style.color='var(--accent)';fTab.style.borderBottomColor='var(--accent)';
+    sTab.style.color='var(--muted)';sTab.style.borderBottomColor='transparent';
+    showToast('読み込み中…');
+    await loadFreeDrawings();
+    renderFreeGallery();
+  }
+}
+async function loadFreeDrawings(){
+  const{data}=await sb.from('free_drawings').select('*').order('created_at',{ascending:false});
+  freeDrawings=data||[];
+}
+function renderFreeGallery(){
+  const body=document.getElementById('gallery-body');body.innerHTML='';galleryItems=[];
+  if(freeDrawings.length===0){
+    body.innerHTML='<div id="gallery-empty"><div class="big">✏️</div><div>まだ絵がありません</div><div style="font-size:12px;color:var(--muted)">フリーモードで絵を描いて投稿してみよう！</div></div>';
+    document.getElementById('gallery-count').textContent='0枚';
+    return;
+  }
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px;padding:14px';
+  freeDrawings.forEach((d)=>{
+    const idx=galleryItems.length;
+    galleryItems.push({id:d.id,dataURL:d.image_data,title:null,type:'free',signature:d.signature||'匿名'});
+    const col=document.createElement('div');col.style.cssText='display:flex;flex-direction:column;align-items:center;cursor:pointer';
+    col.onclick=()=>openLightbox(idx);
+    const img=document.createElement('img');img.style.cssText='width:90px;height:120px;border:2px solid var(--border);border-radius:8px;object-fit:cover;background:#fff';img.src=d.image_data;col.appendChild(img);
+    const sig=document.createElement('div');sig.style.cssText='font-size:9px;color:var(--muted);margin-top:3px';sig.textContent=(d.signature||'匿名')+'作';col.appendChild(sig);
+    grid.appendChild(col);
+  });
+  body.appendChild(grid);
+  document.getElementById('gallery-count').textContent='全'+freeDrawings.length+'枚';
+}
+function renderShiritoriGallery(){
   const body=document.getElementById('gallery-body');body.innerHTML='';galleryItems=[];
   const total=chains[0].length+chains[1].length;
   if(total===0){body.innerHTML='<div id="gallery-empty"><div class="big">🎨</div><div>まだ絵がありません</div><div style="font-size:12px;color:var(--muted)">しりとりモードで絵を描いてみよう！</div></div>';document.getElementById('gallery-count').textContent='0枚';return;}
@@ -834,20 +939,23 @@ function renderGallery(){
     chain.forEach((item,i)=>{
       if(i>0){const arr=document.createElement('div');arr.className='gallery-arrow';arr.textContent='→';row.appendChild(arr);}
       const idx=galleryItems.length;
-      galleryItems.push({id:item.id,dataURL:item.dataURL,title:item.revealed?item.title:null,type:'main',pos:i+1,chainLabel:label,chainIdx:ci,itemIdx:i});
+      galleryItems.push({id:item.id,dataURL:item.dataURL,title:item.revealed?item.title:null,type:'main',pos:i+1,chainLabel:label,chainIdx:ci,itemIdx:i,signature:item.signature||'匿名'});
       const gi=document.createElement('div');gi.className='gallery-item';
       const img=document.createElement('img');img.className='gallery-thumb '+(i===chain.length-1?'latest':'success');
       img.src=item.dataURL;img.onclick=()=>openLightbox(idx);gi.appendChild(img);
       const lbl=document.createElement('div');lbl.className='gallery-lbl';lbl.textContent=item.revealed?'✅ '+item.title:'🙈 ???';gi.appendChild(lbl);
+      const sigEl=document.createElement('div');sigEl.style.cssText='font-size:8px;color:var(--muted)';sigEl.textContent=(item.signature||'匿名')+'作';gi.appendChild(sigEl);
       const col=document.createElement('div');col.style.cssText='display:flex;flex-direction:column;align-items:center';col.appendChild(gi);
       if(item.fails&&item.fails.length>0){
         const fc=document.createElement('div');fc.className='gallery-fail-col';
         item.fails.forEach(f=>{
-          const fidx=galleryItems.length;galleryItems.push({id:f.id,dataURL:f.dataURL,title:f.title,type:'fail',pos:i+1,chainLabel:label});
+          const fidx=galleryItems.length;galleryItems.push({id:f.id,dataURL:f.dataURL,title:f.title,type:'fail',pos:i+1,chainLabel:label,signature:f.signature||'匿名'});
           const fi=document.createElement('div');fi.className='gallery-fail-item';
           const fimg=document.createElement('img');fimg.className='gallery-fail-thumb';fimg.src=f.dataURL;fimg.onclick=()=>openLightbox(fidx);fi.appendChild(fimg);
           const fb=document.createElement('div');fb.className='gallery-fail-lbl';fb.textContent='❌ 失敗';fi.appendChild(fb);
-          const ft=document.createElement('div');ft.className='gallery-fail-title';ft.textContent=f.title;fi.appendChild(ft);fc.appendChild(fi);
+          const ft=document.createElement('div');ft.className='gallery-fail-title';ft.textContent=f.title;fi.appendChild(ft);
+          const fsig=document.createElement('div');fsig.style.cssText='font-size:7px;color:var(--muted)';fsig.textContent=(f.signature||'匿名')+'作';fi.appendChild(fsig);
+          fc.appendChild(fi);
         });col.appendChild(fc);
       }
       row.appendChild(col);
@@ -864,8 +972,18 @@ function updateLightbox(){
   const item=galleryItems[lbIndex];if(!item)return;
   document.getElementById('lightbox-img').src=item.dataURL;
   const te=document.getElementById('lightbox-title');
-  if(item.title){te.textContent=item.title;te.className='lightbox-title';}else{te.textContent='タイトルはまだ秘密 🙈';te.className='lightbox-title hidden-title';}
-  document.getElementById('lightbox-meta').textContent=(lbIndex+1)+' / '+galleryItems.length+'　'+(item.type==='fail'?'❌ 失敗作':'✅ チェーン'+item.chainLabel+' No.'+item.pos);
+  if(item.type==='free'){
+    te.textContent='フリーモード作品';te.className='lightbox-title';
+  } else if(item.title){
+    te.textContent=item.title;te.className='lightbox-title';
+  } else {
+    te.textContent='タイトルはまだ秘密 🙈';te.className='lightbox-title hidden-title';
+  }
+  let metaLabel;
+  if(item.type==='free')metaLabel='✏️ フリーモード';
+  else if(item.type==='fail')metaLabel='❌ 失敗作';
+  else metaLabel='✅ チェーン'+item.chainLabel+' No.'+item.pos;
+  document.getElementById('lightbox-meta').textContent=(lbIndex+1)+' / '+galleryItems.length+'　'+metaLabel+'　'+(item.signature||'匿名')+'作';
   document.getElementById('lb-delete-btn').style.display=isAdminMode?'inline-block':'none';
 }
 
@@ -907,12 +1025,19 @@ async function deleteCurrentLightboxItem(){
   showToast('削除中…');
   if(item.type==='fail'){
     await sb.from('fails').delete().eq('id',item.id);
+  } else if(item.type==='free'){
+    await sb.from('free_drawings').delete().eq('id',item.id);
   } else {
     // メインチェーンの絵を削除：関連する fails も連動削除（DB外部キーのcascadeで自動）
     await sb.from('chains').delete().eq('id',item.id);
   }
-  await loadChains();
-  renderGallery();
+  if(item.type==='free'){
+    await loadFreeDrawings();
+    renderFreeGallery();
+  } else {
+    await loadChains();
+    renderShiritoriGallery();
+  }
   closeLightbox();
   showToast('削除しました 🗑️');
 }
