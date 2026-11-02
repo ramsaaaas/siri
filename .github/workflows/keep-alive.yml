@@ -6,8 +6,10 @@ on:
 
 jobs:
   ping:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
+      - name: Check DNS
+        run: getent hosts mkcbufuhovbctlmzbtxn.supabase.co || echo "DNS lookup failed"
       - name: Ping Supabase
         run: |
           code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 \
